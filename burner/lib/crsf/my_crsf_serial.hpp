@@ -31,7 +31,7 @@ public:
     MyCrsfSerial() : _crc(0xd5),
         _lastReceive(0), _lastChannelsPacket(0), _linkIsUp(false),
         _passthroughMode(false) {
-            this->max_payload_length_ = (long(std::numeric_limits<Len>::max() + 1)) / 8;
+            this->max_payload_length_ = (long(std::numeric_limits<Len>::max()) + 1) / 8;
 
             this->max_len_param_ = sizeof(Msg) + this->max_payload_length_ + 1;
             this->min_len_param_ = sizeof(Msg) + 1 + 1;
@@ -48,32 +48,6 @@ public:
 
         IHeader *header = new CrsfHeader<Req, Len, Msg>(request_id, len, msg_type_id, payload, this->_crc);
         return header;
-
-        // crsf_header_t<Req, Len, Msg> *package = new crsf_header_t<Req, Len, Msg>();
-        // package->msg_type_id = msg_type_id;
-        // package->frame_size = len + sizeof(Msg) + 1;
-        // package->request_id = request_id;
-        // package->data = new uint8_t[len + 2];
-
-        // uint8_t* buf = (uint8_t*) package;
-
-        // buf[len+3] = _crc.calc(&buf[3], len + 2);
-
-
-        // uint8_t buf[CRSF_MAX_PACKET_SIZE];
-        // buf[0] = addr;
-        // buf[1] = len + 2; // type + payload + crc
-        // buf[2] = type;
-        // memcpy(&buf[3], payload, len);
-        // buf[len+3] = _crc.calc(&buf[2], len + 1);
-
-        // Busywait until the serial port seems free
-        //while (millis() - _lastReceive < 2)
-        //    loop();
-
-        // return buf;
-        // return std::pair<uint8_t[CRSF_MAX_PACKET_SIZE], int>(buf, len + 4);
-        // return { buf, len + 4 };
     }
 
     IHeader* handleByte(uint8_t b) override {
@@ -138,6 +112,17 @@ private:
     bool _passthroughMode;
     int _channels[CRSF_NUM_CHANNELS];
 
+    Len* tryExtractLength() {
+        if (_rxBufPos < sizeof(Req) + sizeof(Len)) {
+            return nullptr;
+        }
+
+        uint8_t *buf = new uint8_t[sizeof(Len)];
+        memcpy(buf, _rxBuf + sizeof(Req), sizeof(Len));
+        Len *len = (Len*)buf;
+
+        return len;
+    }
     
     IHeader* handleByteReceived() {
         CrsfHeader<Req, Len, Msg>* result = nullptr;
@@ -147,7 +132,15 @@ private:
             reprocess = false;
             if (_rxBufPos > 1)
             {
-                uint8_t len = _rxBuf[1];
+                // uint8_t len = _rxBuf[1];
+                Len *len_ptr = tryExtractLength();
+                if (!len_ptr) {
+                    continue;
+                }
+
+                Len len = *len_ptr;
+                
+
                 // Sanity check the declared length isn't outside Type + X{1,CRSF_MAX_PAYLOAD_LEN} + CRC
                 // assumes there never will be a CRSF message that just has a type and no data (X)
                 if (len < this->min_len_param_ || len > this->max_len_param_)
@@ -156,10 +149,10 @@ private:
                     reprocess = true;
                 }
 
-                else if (_rxBufPos >= (len + 2))
+                else if (_rxBufPos >= (len + sizeof(Req) + sizeof(Len)))
                 {
-                    uint8_t inCrc = _rxBuf[2 + len - 1];
-                    uint8_t crc = _crc.calc(&_rxBuf[2], len - 1);
+                    uint8_t inCrc = _rxBuf[sizeof(Req) + sizeof(Len) + len - 1];
+                    uint8_t crc = _crc.calc(&_rxBuf[sizeof(Req) + sizeof(Len)], len - 1);
 
                     if (crc == inCrc)
                     {

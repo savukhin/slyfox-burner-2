@@ -13,7 +13,7 @@
 class Connector {
 private:
     uint8_t* (*readByte) (void);
-    IByteHandler byte_handler_;
+    IByteHandler* byte_handler_;
 
     std::mutex started_mutex_;
     bool started_ = false;
@@ -24,19 +24,19 @@ private:
     std::map<uint8_t, subscription_type> subscriptions;
 
     void tryCallSubscriber(IHeader *hdr) { 
-        if (hdr == nullptr) return;
+        if (hdr == nullptr || !this->byte_handler_) return;
 
-        int msg_type_id = hdr->get_msg_id();
+        int msg_type_id = hdr->get_msg_type_id();
         auto subscriber = this->subscriptions.find(msg_type_id);
         if (subscriber == this->subscriptions.end()) return;
 
         int request_id = hdr->get_request_id();
-        void* msg = hdr->get_data();
+        void* msg = hdr->get_payload();
         subscriber->second(msg, request_id);
     }
     
 public:
-    Connector(IByteHandler byte_handler) : byte_handler_(byte_handler) {}
+    Connector(IByteHandler *byte_handler) : byte_handler_(byte_handler) {}
 
     void start(bool check_subscriptions=true) {
         started_ = true;
@@ -60,7 +60,7 @@ public:
         
         uint8_t byte = *byte_ref;
 
-        auto result = this->byte_handler_.handleByte(byte);
+        auto result = this->byte_handler_->handleByte(byte);
 
         return result;
     }
