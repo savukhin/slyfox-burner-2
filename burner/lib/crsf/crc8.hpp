@@ -8,13 +8,14 @@ public:
     Crc8(uint8_t poly) {
         init(poly);
     }
+
     uint8_t calc(uint8_t *data, uint8_t len) {
         uint8_t crc = 0;
-    while (len--)
-    {
-        crc = _lut[crc ^ *data++];
-    }
-    return crc;
+
+        while (len--) {
+            crc = _lut[crc ^ *data++];
+        }
+        return crc;
     }
 
 protected:

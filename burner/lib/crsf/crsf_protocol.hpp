@@ -78,13 +78,14 @@ typedef enum
 
 using request_id_type = uint16_t;
 
-typedef struct crsf_header_s
-{
-    uint8_t msg_type_id;      // from crsf_addr_e
-    uint8_t frame_size;  // counts size after this byte, so it must be the payload size + 2 (type and crc)
-    request_id_type request_id;        // from crsf_frame_type_e
-    uint8_t *data;
-} PACKED crsf_header_t;
+// template <typename Req, typename Len, typename Msg>
+// class crsf_header_t
+// {
+//     Req request_id;        // from crsf_frame_type_e
+//     Len frame_size;  // counts size after this byte, so it must be the payload size + 2 (type and crc)
+//     Msg msg_type_id;      // from crsf_addr_e
+//     uint8_t *data;
+// } PACKED;
 
 typedef struct crsf_channels_s
 {

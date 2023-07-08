@@ -8,46 +8,50 @@
 // #include "messages.hpp"
 #include "imessage.hpp"
 
-#include "my_crsf_serial.hpp"
+#include "my_crsf_serial_interface.hpp"
 
 class Connector {
 private:
     uint8_t* (*readByte) (void);
-    MyCrsfSerial crsf;
+    IByteHandler byte_handler_;
 
     std::mutex started_mutex_;
     bool started_ = false;
 
-    using subscription_type = std::function<void(void*, request_id_type)>;
+    using subscription_type = std::function<void(void*, int)>;
 
     // msg_id -> function of pointer to msg and request_id
     std::map<uint8_t, subscription_type> subscriptions;
 
-    void crsfOnPacket(const crsf_header_t* hdr) {
-        if (hdr == nullptr) throw new std::runtime_error("hdr is accidently null");
+    void tryCallSubscriber(IHeader *hdr) { 
+        if (hdr == nullptr) return;
 
-        auto subscriber = this->subscriptions.find(hdr->msg_type_id);
+        int msg_type_id = hdr->get_msg_id();
+        auto subscriber = this->subscriptions.find(msg_type_id);
         if (subscriber == this->subscriptions.end()) return;
 
-        void* msg = (void *)hdr;
-        subscriber->second(msg, hdr->request_id);
+        int request_id = hdr->get_request_id();
+        void* msg = hdr->get_data();
+        subscriber->second(msg, request_id);
     }
-
+    
 public:
-    Connector() {
-        crsf.onPacket = std::bind(&Connector::crsfOnPacket, this, std::placeholders::_1);
-    }
+    Connector(IByteHandler byte_handler) : byte_handler_(byte_handler) {}
 
-    void start() {
+    void start(bool check_subscriptions=true) {
         started_ = true;
-        while(started_) this->tick();
+        while(started_) {
+            auto hdr = this->tick();
+
+            this->tryCallSubscriber(hdr);
+        }
     }
 
     void stop() {
         started_ = false;
     }
 
-    crsf_header_t* tick() {
+    IHeader* tick() {
         if (this->readByte == nullptr) 
             throw new std::runtime_error("no readbyte function implemented");
         
@@ -56,7 +60,7 @@ public:
         
         uint8_t byte = *byte_ref;
 
-        auto result = crsf.handleByte(byte);
+        auto result = this->byte_handler_.handleByte(byte);
 
         return result;
     }
