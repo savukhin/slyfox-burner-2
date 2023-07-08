@@ -2,13 +2,15 @@
 
 #include "crc8.hpp"
 #include "crsf_protocol.hpp"
+#include "my_crsf_serial_interface.hpp"
 
 #include <functional>
 #include <vector>
 
+
 enum eFailsafeAction { fsaNoPulses, fsaHold };
 
-class MyCrsfSerial
+class MyCrsfSerial : public IByteHandler
 {
 public:
     // Packet timeout where buffer is flushed if no data is received in this time
@@ -18,7 +20,7 @@ public:
     MyCrsfSerial();
     // uint8_t* queuePacket(uint8_t addr, uint8_t type, const void *payload, uint8_t len);
     std::pair<uint8_t*, int> queuePacket(uint8_t msg_type_id, request_id_type request_id, const void *payload, uint8_t len);
-    void handleByte(uint8_t b);
+    crsf_header_t* handleByte(uint8_t b) override;
     void handleBytes(std::vector<uint8_t> sequence);
     void handleBytes(uint8_t *sequence, size_t len);
 
@@ -54,7 +56,7 @@ private:
     int _channels[CRSF_NUM_CHANNELS];
 
     
-    void handleByteReceived();
+    crsf_header_t* handleByteReceived();
     void shiftRxBuffer(uint8_t cnt);
     void processPacketIn(uint8_t len);
     void checkPacketTimeout();

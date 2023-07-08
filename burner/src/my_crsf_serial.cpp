@@ -33,7 +33,7 @@ void MyCrsfSerial::handleBytes(std::vector<uint8_t> sequence)
     checkLinkDown();
 }
 
-void MyCrsfSerial::handleByte(uint8_t b)
+crsf_header_t* MyCrsfSerial::handleByte(uint8_t b)
 {
     this->_lastReceive = std::time(0);
 
@@ -41,22 +41,25 @@ void MyCrsfSerial::handleByte(uint8_t b)
         {
             if (onShiftyByte)
                 onShiftyByte(b);
-            return;
+            return nullptr;
         }
 
 	_rxBuf[_rxBufPos++] = b;
-        handleByteReceived();
+    auto result = handleByteReceived();
 
     if (_rxBufPos == (sizeof(_rxBuf)/sizeof(_rxBuf[0])))
-            {
-                // Packet buffer filled and no valid packet found, dump the whole thing
-                _rxBufPos = 0;
-            }
+    {
+        // Packet buffer filled and no valid packet found, dump the whole thing
+        _rxBufPos = 0;
+    }
+
+    return result;
 }
 
 
-void MyCrsfSerial::handleByteReceived()
+crsf_header_t* MyCrsfSerial::handleByteReceived()
 {
+    crsf_header_t* result = nullptr;
     bool reprocess;
     do
     {
@@ -66,7 +69,7 @@ void MyCrsfSerial::handleByteReceived()
             uint8_t len = _rxBuf[1];
             // Sanity check the declared length isn't outside Type + X{1,CRSF_MAX_PAYLOAD_LEN} + CRC
             // assumes there never will be a CRSF message that just has a type and no data (X)
-            if (len < 3 || len > (CRSF_MAX_PAYLOAD_LEN + 2))
+            if (len < 4 || len > (CRSF_MAX_PAYLOAD_LEN + 3))
             {
                 shiftRxBuffer(1);
                 reprocess = true;
@@ -78,7 +81,8 @@ void MyCrsfSerial::handleByteReceived()
                 uint8_t crc = _crc.calc(&_rxBuf[2], len - 1);
                 if (crc == inCrc)
                 {
-                    processPacketIn(len);
+                    result = (crsf_header_t *)_rxBuf;
+                    // processPacketIn(len);
                     shiftRxBuffer(len + 2);
                     reprocess = true;
                 }
@@ -90,6 +94,8 @@ void MyCrsfSerial::handleByteReceived()
             }  // if complete packet
         } // if pos > 1
     } while (reprocess);
+
+    return result;
 }
 
 void MyCrsfSerial::checkPacketTimeout()

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
+#include ".keepme"
 
-TEST(FooTest, Bar)
+TEST(Crsf, Full)
 {
     {
         SCOPED_TRACE("A"); // This trace point will be included in

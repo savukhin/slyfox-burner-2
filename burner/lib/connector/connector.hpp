@@ -5,7 +5,8 @@
 #include <map>
 #include <mutex>
 
-#include "messages.hpp"
+// #include "messages.hpp"
+#include "imessage.hpp"
 
 #include "my_crsf_serial.hpp"
 
@@ -46,18 +47,18 @@ public:
         started_ = false;
     }
 
-    bool tick() {
+    crsf_header_t* tick() {
         if (this->readByte == nullptr) 
             throw new std::runtime_error("no readbyte function implemented");
         
         uint8_t *byte_ref = this->readByte();
-        if (!byte_ref) return false;
+        if (!byte_ref) return nullptr;
         
         uint8_t byte = *byte_ref;
 
-        crsf.handleByte(byte);
+        auto result = crsf.handleByte(byte);
 
-        return true;
+        return result;
     }
 
     bool subscribe(IMessage msg, subscription_type callback) {
