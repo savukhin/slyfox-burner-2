@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdint.h>
+#include <uleb128.h>
+
 class IHeader {
 public:
     virtual int get_msg_type_id() = 0;

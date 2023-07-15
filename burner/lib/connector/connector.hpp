@@ -9,16 +9,18 @@
 #include "imessage.hpp"
 
 #include "my_crsf_serial_interface.hpp"
+#include "iserial.hpp"
 
 class Connector {
 private:
-    uint8_t* (*readByte) (void);
+    // uint8_t* (*readByte) (void);
     IByteHandler* byte_handler_;
+    ISerial *serial_;
 
     std::mutex started_mutex_;
     bool started_ = false;
 
-    using subscription_type = std::function<void(void*, int)>;
+    using subscription_type = std::function<void(void*, long)>;
 
     // msg_id -> function of pointer to msg and request_id
     std::map<uint8_t, subscription_type> subscriptions;
@@ -36,7 +38,7 @@ private:
     }
     
 public:
-    Connector(IByteHandler *byte_handler) : byte_handler_(byte_handler) {}
+    Connector(IByteHandler *byte_handler, ISerial *serial) : byte_handler_(byte_handler), serial_(serial) {}
 
     void start(bool check_subscriptions=true) {
         started_ = true;
@@ -52,10 +54,12 @@ public:
     }
 
     IHeader* tick() {
-        if (this->readByte == nullptr) 
+        if (this->serial_ == nullptr) 
             throw new std::runtime_error("no readbyte function implemented");
+        if (this->byte_handler_ == nullptr) 
+            throw new std::runtime_error("no byte handler implemented");
         
-        uint8_t *byte_ref = this->readByte();
+        uint8_t *byte_ref = serial_->readByte();
         if (!byte_ref) return nullptr;
         
         uint8_t byte = *byte_ref;
@@ -65,12 +69,15 @@ public:
         return result;
     }
 
-    bool subscribe(IMessage msg, subscription_type callback) {
-        uint8_t id = msg.get_id();
-        auto subscriber = this->subscriptions.find(id);
+    bool subscribe(uint8_t msg_id, subscription_type callback) {
+        auto subscriber = this->subscriptions.find(msg_id);
         if (subscriber == this->subscriptions.end()) return false;
 
-        this->subscriptions[id] = callback;
+        this->subscriptions[msg_id] = callback;
         return true;
+    }
+
+    void sendMessage(IMessage &msg) {
+
     }
 };

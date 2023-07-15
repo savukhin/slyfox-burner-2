@@ -1,0 +1,19 @@
+#pragma once
+
+#define NC 0
+
+#define USB_BAUDRATE 115200
+
+#define PIN_X_PULL NC
+#define PIN_X_DIR  NC
+#define PIN_X_ENA  NC
+
+#define PIN_Y_PULL NC
+#define PIN_Y_DIR  NC
+#define PIN_Y_ENA  NC
+
+#define MOTOR_X_MAX_MM        300
+#define MOTOR_X_PULSE_PER_MM  300
+
+#define MOTOR_Y_MAX_MM        300
+#define MOTOR_Y_PULSE_PER_MM  300
