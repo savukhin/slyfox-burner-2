@@ -2,7 +2,7 @@
 
 class ISensor {
 public:
-    virtual float read() = 0;
+    virtual uint16_t read() = 0;
 };
 
 class IMotor {
@@ -25,5 +25,11 @@ public:
     virtual bool isBusy() = 0;
     virtual bool pause() = 0;
     virtual bool resume() = 0;
+    virtual bool stop() = 0;
+};
+
+class IIgnitor {
+public:
+    virtual bool ignite() = 0;
     virtual bool stop() = 0;
 };

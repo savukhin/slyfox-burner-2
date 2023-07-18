@@ -34,9 +34,11 @@ private:
     std::atomic_bool started_;
     ICarriage *carriage_x_;
     ICarriage *carriage_y_;
+    IIgnitor *ignitor_;
 
 public:
-    Experiment(ICarriage *carriage_x, ICarriage *carriage_y): carriage_x_(carriage_x), carriage_y_(carriage_y) {}
+    Experiment(ICarriage *carriage_x, ICarriage *carriage_y, IIgnitor *ignitor): 
+        carriage_x_(carriage_x), carriage_y_(carriage_y), ignitor_(ignitor) {}
 
     bool start(const Config &config) override {
         config_message_t cfg = config.toMessage();
@@ -61,9 +63,12 @@ public:
             return false;        
         }
 
+        ignitor->ignite();
+
         res = carriage_x_->moveTo(cfg.y2_mm, cfg.rapid_speed_y_mm_s, cfg.accel_y_mm_s2);
+        ignitor->stop();
         if (res.interrupted) {
-            return false;        
+            return false;
         }
     }
 

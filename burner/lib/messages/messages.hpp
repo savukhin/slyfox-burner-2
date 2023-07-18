@@ -55,28 +55,30 @@ typedef struct get_experiment_state_s {
 } PACKED get_experiment_state_t;
 
 typedef struct sensors_s {
-    uint8_t *values;
+    uint16_t *values;
 } PACKED sensors_t;
 
 template <uint8_t ID, uint8_t Len>
 class SensorsMessage_ : public IMessage {
 private:
-    sensors_t *msg;
+    sensors_t *msg_;
 public:
-    uint8_t get_id() override { return ID; }
+    SensorsMessage_() {}
+    SensorsMessage_(sensors_ *msg) : msg_(msg) { }
+    uint8_t get_id() const override { return ID; }
     void fromBytes(void *bytes) override { 
-        this->msg = new sensors_t;
-        this->msg->values = new uint8_t[Len];
-        uint8_t *translated = (uint8_t*)bytes;
+        this->msg_ = new sensors_t;
+        this->msg_->values = new uint16_t[Len];
+        uint16_t *translated = (uint16_t*)bytes;
 
         for (int i = 0; i < Len; i++) {
-            this->msg->values[i] = translated[i];
+            this->msg_->values[i] = translated[i];
         }
     }
-    void* toBytes() override { 
+    void* toBytes() const override { 
         uint8_t *result = new uint8_t[Len];
         for (int i = 0; i < Len; i++) {
-            result[i] = this->msg->values[i];
+            result[i] = this->msg_->values[i];
         }
         return result;
     }

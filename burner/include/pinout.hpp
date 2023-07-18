@@ -4,6 +4,9 @@
 
 #define USB_BAUDRATE 115200
 
+#define PIN_IGNITOR  NC
+#define PIN_PHOTO_RESISTOR  NC
+
 #define PIN_X_PULL NC
 #define PIN_X_DIR  NC
 #define PIN_X_ENA  NC

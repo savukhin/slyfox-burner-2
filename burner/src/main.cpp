@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <FreeRTOSConfig.h>
 #include <pinout.hpp>
+#include <vector>
+
 #include "connector.hpp"
 #include "carriage.hpp"
 #include "arduino_motor.hpp"
@@ -9,12 +11,17 @@
 #include "config.hpp"
 #include "arduino_serial.hpp"
 #include "experiment.hpp"
+#include "sensors.hpp"
+#include "ignitor.hpp"
 
 IConnector *connector;
 ICarriage *carriage_x;
 ICarriage *carriage_y;
 Config config;
+IIgnitor *ignitor;
 IExperiment *experiment;
+std::vector<ISensor> sensors = { PhotoResistor(PIN_PHOTO_RESISTOR) };
+// ISensor *(sensors[]) = { new PhotoResistor(PIN_PHOTO_RESISTOR) };
 
 void setup() {
     IByteHandler *byte_handler = new MyCrsfSerial<REQ_TYPE, LEN_TYPE, MSG_TYPE>();
@@ -28,7 +35,9 @@ void setup() {
     carriage_x = new Carriage(motor_x, 0, MOTOR_X_MAX_MM, MOTOR_X_PULSE_PER_MM);
     carriage_y = new Carriage(motor_y, 0, MOTOR_Y_MAX_MM, MOTOR_Y_PULSE_PER_MM);
 
-    experiment = new Experiment(carriage_x, carriage_y);
+    ignitor = new Ignitor(PIN_IGNITOR);
+
+    experiment = new Experiment(carriage_x, carriage_y, ignitor);
 
 
     // Get config
@@ -79,6 +88,44 @@ void setup() {
         uint8_t status = stopped;
         connector->sendMessage(ResponseMessage(status), req_id);
     });
+
+    BaseType_t xReturned;
+    TaskHandle_t xHandle = NULL;
+    xReturned = xTaskCreate(
+                    vSensorReadAndSend,       /* Function that implements the task. */
+                    "NAME",                   /* Text name for the task. */
+                    512,                      /* Stack size in words, not bytes. */
+                    ( void * ) 1,             /* Parameter passed into the task. */
+                    tskIDLE_PRIORITY,         /* Priority at which the task is created. */
+                    &xHandle );               /* Used to pass out the created task's handle. */
+
+    TaskHandle_t xHandle = NULL;
+    xTaskCreate(
+                    vConnectorStart,       /* Function that implements the task. */
+                    "NAME",                   /* Text name for the task. */
+                    512,                      /* Stack size in words, not bytes. */
+                    ( void * ) 1,             /* Parameter passed into the task. */
+                    tskIDLE_PRIORITY,         /* Priority at which the task is created. */
+                    &xHandle );               /* Used to pass out the created task's handle. */
+}
+
+void vConnectorStart(void *vParams) {
+    connector->start();
+}
+
+void vSensorReadAndSend(void *vParams) {
+    for (;;) {
+        sensors_t *msg = new sensors_t{};
+        msg->values = new uint16_t[sensors.size()];
+
+        for (int i = 0; i < sensors.size(); i++) {
+            auto val = sensors[i].read();
+            msg->values[i] = val;
+        }
+
+        SensorsMessage<1> message(msg);
+        connector->sendMessage(message, 0);
+    }
 }
 
 void loop() {
