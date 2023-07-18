@@ -4,14 +4,16 @@
 #include <stdexcept>
 #include <map>
 #include <mutex>
+#include <atomic>
 
 // #include "messages.hpp"
 #include "imessage.hpp"
+#include "iconnector.hpp"
 
 #include "my_crsf_serial_interface.hpp"
 #include "iserial.hpp"
 
-class Connector {
+class Connector : public IConnector {
 private:
     // uint8_t* (*readByte) (void);
     IByteHandler* byte_handler_;
@@ -20,7 +22,7 @@ private:
     std::mutex started_mutex_;
     bool started_ = false;
 
-    using subscription_type = std::function<void(void*, long)>;
+    std::atomic<long long> new_req_id; 
 
     // msg_id -> function of pointer to msg and request_id
     std::map<uint8_t, subscription_type> subscriptions;
@@ -77,7 +79,10 @@ public:
         return true;
     }
 
-    void sendMessage(IMessage &msg) {
-
+    void sendMessage(const IMessage &msg, long long req_id=0) {
+        auto packet = this->byte_handler_->makePacket(msg, req_id);
+        
+        auto packet_bytes = packet->to_bytes();
+        serial_->writeBytes(packet_bytes, packet->get_length());
     }
 };

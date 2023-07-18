@@ -17,3 +17,7 @@
 
 #define MOTOR_Y_MAX_MM        300
 #define MOTOR_Y_PULSE_PER_MM  300
+
+#define REQ_TYPE long
+#define LEN_TYPE int
+#define MSG_TYPE uint8_t

@@ -37,7 +37,13 @@ public:
             this->min_len_param_ = sizeof(Msg) + 1 + 1;
         }
 
-    IHeader *queuePacket(Req request_id, Len len, Msg msg_type_id, const void *payload) {
+    IHeader *makePacket(const IMessage &msg, long long req_id) override {
+        void* msg_bytes = msg.toBytes();
+        auto len = msg.getByteLen();
+        return this->makePacket(req_id, len, msg.get_id(), msg_bytes);
+    }
+
+    IHeader *makePacket(Req request_id, Len len, Msg msg_type_id, const void *payload) {
         // if (!_linkIsUp)
         //     throw new std::runtime_error("cannot packet: link is down");
         // if (_passthroughMode)
