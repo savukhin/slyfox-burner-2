@@ -11,11 +11,19 @@ public:
     virtual bool release() = 0;
 };
 
+struct MoveResponse {
+    float final_position_mm;
+    bool interrupted;
+};
+
 class ICarriage {
 public:
     // Returns final position (if it is higher than borders)
-    virtual float moveTo(float position, float speed_mm_s, float accell_mm_s2) = 0;
-    virtual float moveLength(float distance, float speed_mm_s, float accell_mm_s2) = 0;
+    virtual MoveResponse moveTo(float position, float speed_mm_s, float accell_mm_s2) = 0;
+    virtual MoveResponse moveLength(float distance, float speed_mm_s, float accell_mm_s2) = 0;
     virtual float getCurrentPosition() = 0;
     virtual bool isBusy() = 0;
+    virtual bool pause() = 0;
+    virtual bool resume() = 0;
+    virtual bool stop() = 0;
 };

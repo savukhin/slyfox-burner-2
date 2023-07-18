@@ -33,15 +33,18 @@ typedef struct config_message_s {
     uint16_t accel_y_mm_s2; // Acceleration Y-axis millimeter/(second^2)
     // -- 12 bytes -- //
 
-    uint16_t y_mm; // Position in Y-axis
-    uint16_t x1_mm; // First position in X-axis
-    uint16_t x2_mm; // Second position in X-axis
+    uint16_t x_mm; // Position in X-axis
+    uint16_t y1_mm; // First position in Y-axis
+    uint16_t y2_mm; // Second position in Y-axis
     // -- 16 bytes -- //
 } PACKED config_message_t;
 
 typedef struct motor_move_message_s {
-    uint16_t position_mm;
-    uint8_t misc; // misc & 0x01 = axis (0 = X, 1 = Y); misc 0x02 = speed (0 = slow, 1 - rapid)
+    float position_mm;
+    uint8_t misc; 
+    // misc & 0x01 = axis (0 = X, 1 = Y)
+    // misc & 0x02 = speed (0 = slow, 1 - rapid); 
+    // misc & 0x04 = interrupt (1 = true, 0 = false)
 } PACKED motor_move_message_t;
 
 typedef struct start_experiment_s {
@@ -99,3 +102,4 @@ template<uint8_t Len>
 using SensorsMessage = SensorsMessage_<6, Len>;
 using StartExperimentMessage = Message<start_experiment_t, 7>;
 using GetExperimentStateMessage = Message<get_experiment_state_t, 8>;
+using StopExperimentMessage = Message<empty_message_t, 9>;
