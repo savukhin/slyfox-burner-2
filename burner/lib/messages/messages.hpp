@@ -64,7 +64,7 @@ private:
     sensors_t *msg_;
 public:
     SensorsMessage_() {}
-    SensorsMessage_(sensors_ *msg) : msg_(msg) { }
+    SensorsMessage_(sensors_t *msg) : msg_(msg) { }
     uint8_t get_id() const override { return ID; }
     void fromBytes(void *bytes) override { 
         this->msg_ = new sensors_t;

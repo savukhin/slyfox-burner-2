@@ -63,13 +63,15 @@ public:
             return false;        
         }
 
-        ignitor->ignite();
+        this->ignitor_->ignite();
 
         res = carriage_x_->moveTo(cfg.y2_mm, cfg.rapid_speed_y_mm_s, cfg.accel_y_mm_s2);
-        ignitor->stop();
+        this->ignitor_->stop();
         if (res.interrupted) {
             return false;
         }
+
+        return true;
     }
 
     bool stop() override {
