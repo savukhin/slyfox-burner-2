@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 
 class ChooseComView extends StatefulWidget {
-  const ChooseComView({super.key});
+  const ChooseComView({super.key, required this.onComConnected});
+
+  final void Function(String address) onComConnected;
 
   @override
   State<ChooseComView> createState() => _ChooseComView();
@@ -10,9 +12,9 @@ class ChooseComView extends StatefulWidget {
 
 class _ChooseComView extends State<ChooseComView> {
   String? dropdownValue;
-  List<String> list = <String>['One', 'Two', 'Three', 'Four'];
   bool comChoosed = false;
   List<String> availablePorts = [];
+  String? error;
 
   @override
   void initState() {
@@ -25,12 +27,18 @@ class _ChooseComView extends State<ChooseComView> {
     setState(() => availablePorts = SerialPort.availablePorts);
   }
 
-  bool connectCom() {
+  bool connectCom(String address) {
     return true;
   }
 
-  void onConnectComPressed() {
-
+  void onConnectComPressed(String address) {
+    if (connectCom(address)) {
+      widget.onComConnected(address);
+    } else {
+      setState(() {
+        error = "Cannot connect COM";
+      });
+    }
   }
 
   @override
@@ -80,10 +88,13 @@ class _ChooseComView extends State<ChooseComView> {
           backgroundColor: MaterialStatePropertyAll<Color>(
               Theme.of(context).colorScheme.inversePrimary),
         ),
-        onPressed: onConnectComPressed,
+        onPressed: () => { onConnectComPressed(dropdownValue ?? "") },
         child: const Text("Connect COM"),
       ) : const Text(""),
       
+      const SizedBox(height: 10),
+
+      Text(error ?? "")
     ]);
   }
 }

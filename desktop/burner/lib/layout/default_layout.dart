@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 const List<String> list = <String>['One', 'Two', 'Three', 'Four'];
 
 class DefaultLayout extends StatefulWidget {
-  const DefaultLayout({super.key, required this.child});
+  const DefaultLayout({super.key,required this.child});
   final Widget? child;
 
   @override
@@ -20,6 +20,7 @@ class _DefaultLayoutState extends State<DefaultLayout> {
       body: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.stretch,
+          // mainAxisAlignment: MainAxisAlignment.,
           children: [
             Container(
               width: 300,
