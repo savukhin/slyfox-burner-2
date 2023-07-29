@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-const List<String> list = <String>['One', 'Two', 'Three', 'Four'];
+import 'package:flutter_libserialport/flutter_libserialport.dart';
 
 class ChooseComView extends StatefulWidget {
   const ChooseComView({super.key});
@@ -10,33 +9,81 @@ class ChooseComView extends StatefulWidget {
 }
 
 class _ChooseComView extends State<ChooseComView> {
-  String dropdownValue = list.first;
+  String? dropdownValue;
+  List<String> list = <String>['One', 'Two', 'Three', 'Four'];
+  bool comChoosed = false;
+  List<String> availablePorts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    refreshComs();
+  }
+  
+
+  void refreshComs() {
+    setState(() => availablePorts = SerialPort.availablePorts);
+  }
+
+  bool connectCom() {
+    return true;
+  }
+
+  void onConnectComPressed() {
+
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: DropdownButton<String>(
+    return Column(
+      mainAxisSize: MainAxisSize.max,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+      ElevatedButton(
+        style: ButtonStyle(
+          backgroundColor: MaterialStatePropertyAll<Color>(
+              Theme.of(context).colorScheme.inversePrimary),
+        ),
+        onPressed: refreshComs,
+        child: const Text("Refresh COMs"),
+      ),
+      const SizedBox(height: 10),
+
+      DropdownButton<String>(
         value: dropdownValue,
-        icon: const Icon(Icons.access_alarm_sharp),
         elevation: 1,
-        // style: const TextStyle(color: Colors.deepPurple),
+        hint: const Text("Choose an item"),
+        isExpanded: true,
         underline: Container(
           height: 2,
-          // color: Colors.deepPurpleAccent,
+          color: Theme.of(context).colorScheme.inversePrimary,
         ),
         onChanged: (String? value) {
-          // This is called when the user selects an item.
           setState(() {
-            dropdownValue = value!;
+            dropdownValue = value ?? "";
+            comChoosed = (value != null);
           });
         },
-        items: list.map<DropdownMenuItem<String>>((String value) {
+        items: availablePorts.map<DropdownMenuItem<String>>((String address) {
+          // final port = SerialPort(address);
+
           return DropdownMenuItem<String>(
-            value: value,
-            child: Text(value),
+            value: address,
+            child: Center(child: Text(address)),
           );
         }).toList(),
       ),
-    );
+      const SizedBox(height: 10),
+
+      comChoosed ? ElevatedButton(
+        style: ButtonStyle(
+          backgroundColor: MaterialStatePropertyAll<Color>(
+              Theme.of(context).colorScheme.inversePrimary),
+        ),
+        onPressed: onConnectComPressed,
+        child: const Text("Connect COM"),
+      ) : const Text(""),
+      
+    ]);
   }
 }
