@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'layout/defaultLayout.dart';
+import 'layout/default_layout.dart';
+import 'views/choose_com_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -30,10 +31,13 @@ class MyApp extends StatelessWidget {
         //
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Color.fromARGB(255, 255, 190, 92)),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      // home: ChooseComView(),
+      home: const DefaultLayout(
+        child: ChooseComView(),
+      ),
     );
   }
 }
