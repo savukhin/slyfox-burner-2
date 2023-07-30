@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 const List<String> list = <String>['One', 'Two', 'Three', 'Four'];
 
 class DefaultLayout extends StatefulWidget {
-  const DefaultLayout({super.key,required this.child});
-  final Widget? child;
+  const DefaultLayout({super.key, required this.child});
+  final Widget child;
 
   @override
   State<DefaultLayout> createState() => _DefaultLayoutState();
@@ -26,16 +26,17 @@ class _DefaultLayoutState extends State<DefaultLayout> {
               width: 300,
               padding: const EdgeInsets.all(20),
               child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.transparent,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Colors.transparent,
+                    ),
+                    borderRadius: const BorderRadius.all(Radius.circular(10)),
+                    color: Theme.of(context).colorScheme.primaryContainer,
                   ),
-                  borderRadius: const BorderRadius.all(Radius.circular(10)),
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                ),
-                child: widget.child,
-              ),
+                  child: SingleChildScrollView(
+                    child: widget.child,
+                  )),
             ),
             Expanded(
               child: Container(
