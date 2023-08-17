@@ -1,0 +1,6 @@
+package foo.bar;
+
+message MyMessage {
+  required string false = 1;
+  required string myFalse = 2;
+}

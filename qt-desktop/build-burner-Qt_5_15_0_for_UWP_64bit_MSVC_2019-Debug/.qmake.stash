@@ -1,0 +1,83 @@
+QMAKE_CXX.QT_COMPILER_STDCXX = 199711L
+QMAKE_CXX.QMAKE_MSC_VER = 1929
+QMAKE_CXX.QMAKE_MSC_FULL_VER = 192930137
+QMAKE_CXX.COMPILER_MACROS = \
+    QT_COMPILER_STDCXX \
+    QMAKE_MSC_VER \
+    QMAKE_MSC_FULL_VER
+QMAKE_CXX.INCDIRS = \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/include" \
+    "C:/Program Files (x86)/Windows Kits/NETFXSDK/4.8/include/um" \
+    "C:/Program Files (x86)/Windows Kits/10/include/10.0.19041.0/ucrt" \
+    "C:/Program Files (x86)/Windows Kits/10/include/10.0.19041.0/shared" \
+    "C:/Program Files (x86)/Windows Kits/10/include/10.0.19041.0/um" \
+    "C:/Program Files (x86)/Windows Kits/10/include/10.0.19041.0/winrt" \
+    "C:/Program Files (x86)/Windows Kits/10/include/10.0.19041.0/cppwinrt"
+QMAKE_CXX.LIBDIRS = \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/lib/x64/store" \
+    "C:/Program Files (x86)/Windows Kits/NETFXSDK/4.8/lib/um/x64" \
+    "C:/Program Files (x86)/Windows Kits/10/lib/10.0.19041.0/ucrt/x64" \
+    "C:/Program Files (x86)/Windows Kits/10/lib/10.0.19041.0/um/x64"
+QMAKE_CXX.PATH = \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/Extensions/Microsoft/IntelliCode/CLI" \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/HostX86/x64" \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/HostX86/x86" \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/VC/VCPackages" \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/TestWindow" \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/TeamFoundation/Team Explorer" \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/bin/Roslyn" \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Team Tools/Performance Tools/x64" \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Team Tools/Performance Tools" \
+    "C:/Program Files (x86)/Microsoft Visual Studio/Shared/Common/VSPerfCollectionTools/vs2019/x64" \
+    "C:/Program Files (x86)/Microsoft Visual Studio/Shared/Common/VSPerfCollectionTools/vs2019" \
+    "C:/Program Files (x86)/Microsoft SDKs/Windows/v10.0A/bin/NETFX 4.8 Tools" \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/FSharp/Tools" \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/Tools/devinit" \
+    "C:/Program Files (x86)/Windows Kits/10/bin/10.0.19041.0/x86" \
+    "C:/Program Files (x86)/Windows Kits/10/bin/x86" \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/MSBuild/Current/Bin" \
+    C:/Windows/Microsoft.NET/Framework/v4.0.30319 \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE" \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/Tools" \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/HostX64/x64" \
+    "C:/Program Files (x86)/Microsoft SDKs/Windows/v10.0A/bin/NETFX 4.8 Tools/x64" \
+    "C:/Program Files (x86)/Windows Kits/10/bin/10.0.19041.0/x64" \
+    "C:/Program Files (x86)/Windows Kits/10/bin/x64" \
+    C:/Windows/Microsoft.NET/Framework64/v4.0.30319 \
+    "C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common" \
+    C:/WinAVR-20100110/bin \
+    C:/WinAVR-20100110/utils/bin \
+    C:/ProgramData/Oracle/Java/javapath \
+    C:/WINDOWS/system32 \
+    C:/WINDOWS \
+    C:/WINDOWS/System32/Wbem \
+    C:/WINDOWS/System32/WindowsPowerShell/v1.0 \
+    C:/WINDOWS/System32/OpenSSH \
+    "C:/Program Files/Git/cmd" \
+    "C:/Program Files/dotnet" \
+    "C:/Program Files/PuTTY" \
+    "C:/Program Files (x86)/dotnet" \
+    "C:/Program Files (x86)/Windows Kits/8.1/Windows Performance Toolkit" \
+    "C:/Program Files/Microsoft SQL Server/120/Tools/Binn" \
+    C \
+    "C:/Program Files (x86)/STMicroelectronics/STM32 ST-LINK Utility/ST-LINK Utility" \
+    "C:/Program Files/nodejs" \
+    "C:/Program Files/Docker/Docker/resources/bin" \
+    C:/ProgramData/DockerDesktop/version-bin \
+    C:/Users/Sava/AppData/Local/Microsoft/WindowsApps \
+    "C:/Users/Sava/AppData/Local/Programs/Microsoft VS Code/bin" \
+    C:/Users/Sava/AppData/Local/GitHubDesktop/bin \
+    C:/MinGW/bin \
+    C:/Users/Sava/.dotnet/tools \
+    C:/Users/Sava/AppData/Local/Programs/Python/Python39 \
+    "C:/Users/Sava/AppData/Local/JetBrains/PyCharm Community Edition 2021.1.2/bin" \
+    C:/SQLite3/sqlite-tools-win32-x86-3360000 \
+    "C:/Program Files/JetBrains/CLion 2021.2.3/bin" \
+    C:/Users/Sava/AppData/Roaming/npm \
+    C:/D/programmist/Compilers/gtkwave-3.3.100-bin-win64/gtkwave64/bin \
+    C:/D/programmist/Compilers/ghdl-0.33-win32/ghdl-0.33/bin \
+    C:/intelFPGA/18.0/modelsim_ase/win32aloem \
+    C:/D/sdk/flutter_windows_3.10.6-stable/flutter/bin \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin" \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja" \
+    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/VC/Linux/bin/ConnectionManagerExe"
