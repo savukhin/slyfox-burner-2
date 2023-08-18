@@ -18,6 +18,16 @@ public:
 private slots:
     void on_pushButton_5_clicked();
 
+    void on_pushButton_8_clicked();
+
+    void on_refreshComsButton_clicked();
+
+    void updateComsDropdown();
+
+    void on_comDropdown_currentIndexChanged(int index);
+
+    void on_selectComButton_clicked();
+
 private:
     Ui::MainWindow *ui;
 };

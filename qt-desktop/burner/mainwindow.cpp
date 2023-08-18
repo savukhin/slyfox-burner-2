@@ -4,6 +4,9 @@
 #include <QDebug>
 #include <QRegExpValidator>
 
+#include <QSerialPort>
+#include <QSerialPortInfo>
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -21,6 +24,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lowYSpeedInput->setValidator(naturalValidator);
     ui->accelXInput->setValidator(naturalValidator);
     ui->accelYInput->setValidator(naturalValidator);
+
+    this->updateComsDropdown();
 }
 
 MainWindow::~MainWindow()
@@ -35,10 +40,48 @@ void MainWindow::on_pushButton_5_clicked()
       reply = QMessageBox::question(this, "Test", "Quit?",
                                     QMessageBox::Yes|QMessageBox::No);
       if (reply == QMessageBox::Yes) {
-        qDebug() << "Yes was clicked";
+        qDebug() << qVersion();
         QApplication::quit();
       } else {
         qDebug() << "Yes was *not* clicked";
       }
+}
+
+
+void MainWindow::on_pushButton_8_clicked()
+{
+    ui->stackedOptions->setCurrentIndex((ui->stackedOptions->currentIndex() + 1) % 2);
+}
+
+void MainWindow::updateComsDropdown() {
+    ui->comDropdown->clear();
+    const auto infos = QSerialPortInfo::availablePorts();
+    for (const QSerialPortInfo &info : infos) {
+        QStringList list;
+        list << info.portName();
+      ui->comDropdown->addItem(list.first());
+    }
+
+    ui->selectComButton->setVisible(false);
+}
+
+
+void MainWindow::on_refreshComsButton_clicked()
+{
+    this->updateComsDropdown();
+}
+
+
+void MainWindow::on_comDropdown_currentIndexChanged(int index)
+{
+    ui->selectComButton->setVisible(true);
+}
+
+
+void MainWindow::on_selectComButton_clicked()
+{
+    QVariant val = ui->comDropdown->currentText();
+
+    ui->stackedOptions->setCurrentIndex(1);
 }
 

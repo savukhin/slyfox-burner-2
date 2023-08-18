@@ -1,6 +1,6 @@
 QT       += core gui
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets serialport
 
 CONFIG += c++11
 
@@ -22,6 +22,7 @@ TRANSLATIONS += \
     burner_en_US.ts
 CONFIG += lrelease
 CONFIG += embed_translations
+#CONFIG += serialport
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
