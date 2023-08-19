@@ -7,9 +7,14 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
+
+#include "DesktopSerial.hpp"
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
+private:
+    DesktopSerial serial;
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -23,6 +28,8 @@ private slots:
     void on_refreshComsButton_clicked();
 
     void updateComsDropdown();
+
+    void dropConnection();
 
     void on_comDropdown_currentIndexChanged(int index);
 

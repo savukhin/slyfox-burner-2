@@ -13,6 +13,19 @@ SOURCES += \
     mainwindow.cpp
 
 HEADERS += \
+    ../../burner/lib/crsf/crc8.hpp \
+    ../../burner/lib/crsf/crsf_header.hpp \
+    ../../burner/lib/crsf/crsf_protocol.hpp \
+    ../../burner/lib/crsf/my_crsf_serial.hpp \
+    ../../burner/lib/crsf/my_crsf_serial_interface.hpp \
+    ../../burner/lib/messages/imessage.hpp \
+    ../../burner/lib/messages/messages.hpp \
+    DesktopSerial.hpp \
+    crsf/crc8.hpp \
+    crsf/crsf_header.hpp \
+    crsf/crsf_protocol.hpp \
+    crsf/my_crsf_serial.hpp \
+    crsf/my_crsf_serial_interface.hpp \
     mainwindow.h
 
 FORMS += \

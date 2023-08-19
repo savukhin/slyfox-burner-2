@@ -7,6 +7,7 @@
 #include <QSerialPort>
 #include <QSerialPortInfo>
 
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -18,6 +19,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->stepLineEdit->setValidator(naturalValidator);
 
+    ui->startXInput->setValidator(naturalValidator);
+    ui->endXInput->setValidator(naturalValidator);
+    ui->startXInput->setValidator(naturalValidator);
+
     ui->rapidXSpeedInput->setValidator(naturalValidator);
     ui->rapidYSpeedInput->setValidator(naturalValidator);
     ui->lowXSpeedInput->setValidator(naturalValidator);
@@ -25,7 +30,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->accelXInput->setValidator(naturalValidator);
     ui->accelYInput->setValidator(naturalValidator);
 
-    this->updateComsDropdown();
+    auto read = this->serial.readByte();
+
+    this->dropConnection();
 }
 
 MainWindow::~MainWindow()
@@ -65,6 +72,10 @@ void MainWindow::updateComsDropdown() {
     ui->selectComButton->setVisible(false);
 }
 
+void MainWindow::dropConnection() {
+    ui->stackedOptions->setCurrentIndex(0);
+    this->updateComsDropdown();
+}
 
 void MainWindow::on_refreshComsButton_clicked()
 {

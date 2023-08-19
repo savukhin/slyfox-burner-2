@@ -1,4 +1,5 @@
-    #pragma once
+#ifndef CRC8_HPP
+#define CRC8_HPP
 
 #include <stdint.h>
 
@@ -20,7 +21,7 @@ public:
 
 protected:
     uint8_t _lut[256];
-    void init(uint8_t poly) { 
+    void init(uint8_t poly) {
         for (int idx=0; idx<256; ++idx)
     {
         uint8_t crc = idx;
@@ -32,3 +33,5 @@ protected:
     }
     }
 };
+
+#endif // CRC8_HPP

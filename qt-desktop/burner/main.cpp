@@ -6,12 +6,11 @@
 #include <iostream>
 #include <QTranslator>
 
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     QApplication::setStyle(QStyleFactory::create("Fusion"));
-
-    std::cout << "Qt version " << qVersion() << std::endl;
 
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();
