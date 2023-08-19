@@ -5,7 +5,9 @@
 #include <QLocale>
 #include <iostream>
 #include <QTranslator>
+#include <QtCore/qglobal.h>
 
+#define QT
 
 int main(int argc, char *argv[])
 {

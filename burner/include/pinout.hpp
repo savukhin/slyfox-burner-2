@@ -24,3 +24,13 @@
 #define REQ_TYPE long
 #define LEN_TYPE int
 #define MSG_TYPE uint8_t
+
+#define DEFAULT_RAPID_SPEED_X_MM_S 1000
+#define DEFAULT_RAPID_SPEED_Y_MM_S 1000
+#define DEFAULT_SLOW_SPEED_X_MM_S 1000
+#define DEFAULT_SLOW_SPEED_Y_MM_S 1000
+#define DEFAULT_ACCEL_X 10
+#define DEFAULT_ACCEL_Y 10
+#define DEFAULT_X_MM 0
+#define DEFAULT_Y1_MM 0
+#define DEFAULT_Y2_MM 0

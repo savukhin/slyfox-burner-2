@@ -1,18 +1,24 @@
 #pragma once
 
 #include "imessage.hpp"
+#include "../../include/pinout.hpp"
 
 template<typename T, uint8_t ID>
 class Message : public IMessage {
 protected:
     T *msg_;
 public:
-    Message() = default;
-    Message(T *msg) { this->msg_ = msg; }
+    Message() { this->msg_ = new T; };
+    Message(T *msg) {
+        if (msg_ != nullptr) delete this->msg_;
+        this->msg_ = msg;
+    }
     uint8_t get_id() const override { return ID; }
     void fromBytes(void *bytes) override { this->msg_ = (T*)bytes; }
     void* toBytes() const override { return (void*)this->msg_; }
     long long getByteLen() const override { return sizeof(T); }
+
+    ~Message() { delete this->msg_; };
 };
 
 typedef struct empty_message_s {
@@ -23,20 +29,20 @@ typedef struct response_message_s {
 } PACKED response_message_t;
 
 typedef struct config_message_s {
-    uint16_t rapid_speed_x_mm_s; // Rapid speed X-axis millimeter/second
-    uint16_t slow_speed_x_mm_s; // Slow speed X-axis millimeter/second
-    uint16_t rapid_speed_y_mm_s; // Rapid speed Y-axis millimeter/second
-    uint16_t slow_speed_y_mm_s; // Slow speed Y-axis millimeter/second
+    uint16_t rapid_speed_x_mm_s = DEFAULT_RAPID_SPEED_X_MM_S; // Rapid speed X-axis millimeter/second
+    uint16_t slow_speed_x_mm_s = DEFAULT_SLOW_SPEED_X_MM_S; // Slow speed X-axis millimeter/second
+    uint16_t rapid_speed_y_mm_s = DEFAULT_RAPID_SPEED_Y_MM_S; // Rapid speed Y-axis millimeter/second
+    uint16_t slow_speed_y_mm_s = DEFAULT_SLOW_SPEED_Y_MM_S; // Slow speed Y-axis millimeter/second
     // -- 8 bytes -- //
 
-    uint16_t accel_x_mm_s2; // Acceleration X-axis millimeter/(second^2)
-    uint16_t accel_y_mm_s2; // Acceleration Y-axis millimeter/(second^2)
+    uint16_t accel_x_mm_s2 = DEFAULT_ACCEL_X; // Acceleration X-axis millimeter/(second^2)
+    uint16_t accel_y_mm_s2 = DEFAULT_ACCEL_Y; // Acceleration Y-axis millimeter/(second^2)
     // -- 12 bytes -- //
 
-    uint16_t x_mm; // Position in X-axis
-    uint16_t y1_mm; // First position in Y-axis
-    uint16_t y2_mm; // Second position in Y-axis
-    // -- 16 bytes -- //
+    uint16_t x_mm = DEFAULT_X_MM; // Position in X-axis
+    uint16_t y1_mm = DEFAULT_Y1_MM; // First position in Y-axis
+    uint16_t y2_mm = DEFAULT_Y2_MM; // Second position in Y-axis
+    // -- 18 bytes -- //
 } PACKED config_message_t;
 
 typedef struct motor_move_message_s {

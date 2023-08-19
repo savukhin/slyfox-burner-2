@@ -2,7 +2,8 @@
 
 #include <string.h>
 
-#include "my_crsf_serial_interface.hpp"
+#include "../crsf/my_crsf_serial_interface.hpp"
+#include "crc8.hpp"
 #define PACKED __attribute__((packed))
 
 template <typename Req, typename Len, typename Msg>
@@ -78,15 +79,21 @@ public:
         this->header->data = payload;
         this->header->crc = *crc;
 
-        free(req);
-        free(len);
-        free(msg);
-        free(crc);
+        // free(req);
+        // free(len);
+        // free(msg);
+        // free(crc);
+
+        delete req;
+        delete len;
+        delete msg;
+        delete crc;
     }
 
     int get_msg_type_id() override { return header->msg_type_id; };
     long long get_request_id() override { return header->request_id; };
-    int get_length() override { return header->frame_size; };
+    int get_frame_length() override { return header->frame_size; };
+    int get_total_length() override { return this->total_length_; };
     int get_sum() override {return header->crc; }
 
     void* get_payload() override { return (void*)header->data; }
@@ -94,22 +101,35 @@ public:
     // uint8_t* get_header() override { return (uint8_t*)header; }
     uint8_t* to_bytes() override {
         uint8_t *buf = new uint8_t[this->total_length_];
-        Req *req = &this->header->request_id;
-        Len *len = &this->header->frame_size;
-        Msg *msg = &this->header->msg_type_id;
-        uint8_t *crc = &this->header->crc;
+
+
+//        Req *req = new Req;
+//        memcpy(req, &this->header->request_id, sizeof(Req));
+//        Len *len = new Len;
+//        memcpy(len, (const void*) &this->header->frame_size, sizeof(Len));
+//        Msg *msg = new Msg;
+//        memcpy(msg, (const void*) &this->header->msg_type_id, sizeof(Msg));
+//        uint8_t *crc = new uint8_t;
+//        memcpy(crc, (const void*) &this->header->crc, sizeof(uint8_t));
 
         int i = 0;
-        memcpy(buf + i, req, sizeof(Req));
+        memcpy(buf + i, &this->header->request_id, sizeof(Req));
         i += sizeof(Req);
-        memcpy(buf + i, len, sizeof(Len));
+        memcpy(buf + i, &this->header->frame_size, sizeof(Len));
         i += sizeof(Len);
-        memcpy(buf + i, msg, sizeof(Msg));
+        memcpy(buf + i, &this->header->msg_type_id, sizeof(Msg));
         i += sizeof(Msg);
 
         memcpy(buf + i, header->data, this->payload_length_);
         i += this->payload_length_;
-        memcpy(buf + i, crc, 1);
+        memcpy(buf + i, &this->header->crc, 1);
+
+        int *bufi = (int*)buf;
+
+//        delete req;
+//        delete len;
+//        delete msg;
+//        delete crc;
 
         return buf;
     }

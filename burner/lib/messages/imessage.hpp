@@ -1,6 +1,6 @@
 #pragma once
 
-#include "crsf_protocol.hpp"
+#include "../crsf/crsf_protocol.hpp"
 
 class IMessage {
 public:

@@ -4,11 +4,12 @@
 #include <stdexcept>
 #include <map>
 #include <mutex>
+#include <functional>
 
 // #include "messages.hpp"
-#include "imessage.hpp"
+#include "../messages/imessage.hpp"
 
-#include "my_crsf_serial_interface.hpp"
+#include "../crsf/my_crsf_serial_interface.hpp"
 #include "iserial.hpp"
 
 class IConnector {

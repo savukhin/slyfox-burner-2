@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 class ISerial {
 public:
     virtual uint8_t* readByte() = 0;

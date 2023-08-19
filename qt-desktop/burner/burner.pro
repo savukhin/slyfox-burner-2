@@ -13,6 +13,10 @@ SOURCES += \
     mainwindow.cpp
 
 HEADERS += \
+    ../../burner/lib/connector/arduino_serial.hpp \
+    ../../burner/lib/connector/connector.hpp \
+    ../../burner/lib/connector/iconnector.hpp \
+    ../../burner/lib/connector/iserial.hpp \
     ../../burner/lib/crsf/crc8.hpp \
     ../../burner/lib/crsf/crsf_header.hpp \
     ../../burner/lib/crsf/crsf_protocol.hpp \
@@ -22,12 +26,8 @@ HEADERS += \
     ../../burner/lib/messages/messages.hpp \
     DesktopSerial.hpp \
     connector.hpp \
-    crsf/crc8.hpp \
-    crsf/crsf_header.hpp \
-    crsf/crsf_protocol.hpp \
-    crsf/my_crsf_serial.hpp \
-    crsf/my_crsf_serial_interface.hpp \
-    mainwindow.h
+    mainwindow.h \
+    settings.hpp
 
 FORMS += \
     mainwindow.ui

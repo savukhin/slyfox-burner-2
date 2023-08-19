@@ -8,11 +8,15 @@
 #include <atomic>
 #include <set>
 
+#ifdef QT
+#include <QDebug>
+#endif
+
 // #include "messages.hpp"
-#include "imessage.hpp"
+#include "../messages/imessage.hpp"
 #include "iconnector.hpp"
 
-#include "my_crsf_serial_interface.hpp"
+#include "../crsf/my_crsf_serial_interface.hpp"
 #include "iserial.hpp"
 
 class Connector : public IConnector {
@@ -30,8 +34,6 @@ private:
     std::set<long long> waiters_;
     std::condition_variable cv_response;
     std::mutex cv_response_mtx;
-
-    
 
     // msg_id -> function of pointer to msg and request_id
     std::map<uint8_t, subscription_type> subscriptions;
@@ -65,20 +67,29 @@ public:
     void start(bool check_subscriptions=true) {
         started_ = true;
         while(started_) {
-            auto hdr = this->tick();
+            #ifdef ARDUINO
+            delay(250);
+            #endif
+            IHeader* hdr = this->tick();
+
+            if (hdr == nullptr) continue;
 
             long long req_id = hdr->get_request_id();
 
             bool isExist = this->waiterExists(req_id);
 
             if (!isExist) {
-                this->tryCallSubscriber(hdr);
+                if (check_subscriptions)
+                    this->tryCallSubscriber(hdr);
+
                 continue;
             }
 
             received_mutex_.lock();
             received_[req_id] = hdr;
             received_mutex_.unlock();
+
+            
 
             delete hdr;
         }
@@ -89,15 +100,28 @@ public:
     }
 
     IHeader* tick() {
+        #ifdef ARDUINO
+        // Serial.println("tick");
+        // Serial.flush();
+        #endif
+
         if (this->serial_ == nullptr) 
             throw new std::runtime_error("no readbyte function implemented");
         if (this->byte_handler_ == nullptr) 
             throw new std::runtime_error("no byte handler implemented");
-        
+
         uint8_t *byte_ref = serial_->readByte();
+
         if (!byte_ref) return nullptr;
-        
+
         uint8_t byte = *byte_ref;
+        #ifdef ARDUINO
+        //Serial.println("Received byte " + (int)byte);
+        //Serial.flush();
+        #endif
+#ifdef QT
+        qDebug() << "received byte " << byte;
+#endif
 
         auto result = this->byte_handler_->handleByte(byte);
 
@@ -113,13 +137,14 @@ public:
     }
 
     void sendMessage(const IMessage &msg, long long req_id=0) {
+        auto id = msg.get_id();
         auto packet = this->byte_handler_->makePacket(msg, req_id);
         
         auto packet_bytes = packet->to_bytes();
-        serial_->writeBytes(packet_bytes, packet->get_length());
+        serial_->writeBytes(packet_bytes, packet->get_total_length());
     }
 
-    IHeader* sendMessageSynced(const IMessage &msg, long long req_id=0, const double& timeout=0) {
+    IHeader* sendMessageSynced(const IMessage &msg, long long req_id=0, const double& timeout_s=0) {
         sendMessage(msg, req_id);
 
         
@@ -137,10 +162,10 @@ public:
         };
         // depending on the timeout, we may wait a fixed amount of time, or
         // indefinitely
-        if(timeout > 0) {
+        if(timeout_s > 0) {
             if(!cv_response.wait_for(
                 lock,
-                std::chrono::milliseconds(size_t(timeout * 1e3)),
+                std::chrono::milliseconds(size_t(timeout_s * 1e3)),
                 predicate)) {
   
                 return nullptr;

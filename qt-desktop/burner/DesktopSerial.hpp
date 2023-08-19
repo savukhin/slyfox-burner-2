@@ -4,21 +4,28 @@
 #include <stdint.h>
 #include "../../burner/lib/connector/iserial.hpp"
 #include <QSerialPort>
+#include <QDebug>
 
 class DesktopSerial : public ISerial {
 private:
-    QSerialPort serial;
+
 public:
+    QSerialPort serial;
+
     DesktopSerial(unsigned int baud=115200) {
         this->serial.setBaudRate(baud);
     }
 
     void setPort(QString portName) {
         this->serial.setPortName(portName);
+        this->serial.setDataBits(QSerialPort::Data8);
+        this->serial.setParity(QSerialPort::NoParity);
+        this->serial.setStopBits(QSerialPort::OneStop);
+        this->serial.setFlowControl(QSerialPort::NoFlowControl);
     }
 
-    void open() {
-        this->serial.open(QIODevice::ReadWrite);
+    bool open() {
+        return this->serial.open(QIODevice::ReadWrite);
     }
 
     void close() {
@@ -48,7 +55,12 @@ public:
 
     void writeBytes(uint8_t *data, long length) override {
         const char* casted = (const char*)data;
-        this->serial.write(casted, length);
+        auto res = this->serial.write(casted, length);
+        qDebug() << "Wrote " << data;
+        for (int i = 0; i < length; i++)
+            qDebug() << (int)data[i];
+        qDebug() << "Len " << length;
+        qDebug() << "res = " << res;
     }
 };
 

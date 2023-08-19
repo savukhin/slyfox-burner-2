@@ -10,6 +10,7 @@
 #include <string.h>
 #include <functional>
 #include <vector>
+#include <stdexcept>
 #include <limits>
 
 
@@ -40,6 +41,7 @@ public:
     IHeader *makePacket(const IMessage &msg, long long req_id) override {
         void* msg_bytes = msg.toBytes();
         auto len = msg.getByteLen();
+        auto id = msg.get_id();
         return this->makePacket(req_id, len, msg.get_id(), msg_bytes);
     }
 

@@ -14,6 +14,8 @@
 #include "sensors.hpp"
 #include "ignitor.hpp"
 
+#define RD_TLS __thread
+
 IConnector *connector;
 ICarriage *carriage_x;
 ICarriage *carriage_y;
@@ -43,6 +45,8 @@ void vSensorReadAndSend(void *vParams) {
 }
 
 void setup() {
+    // Serial.begin(115200);
+    // return;
     IByteHandler *byte_handler = new MyCrsfSerial<REQ_TYPE, LEN_TYPE, MSG_TYPE>();
     ISerial *serial = new ArduinoSerial(USB_BAUDRATE);
 
@@ -108,26 +112,34 @@ void setup() {
         connector->sendMessage(ResponseMessage(status), req_id);
     });
 
-    BaseType_t xReturned;
-    TaskHandle_t xHandle = NULL;
-    xReturned = xTaskCreate(
-                    vSensorReadAndSend,       /* Function that implements the task. */
-                    "NAME",                   /* Text name for the task. */
-                    512,                      /* Stack size in words, not bytes. */
-                    ( void * ) 1,             /* Parameter passed into the task. */
-                    tskIDLE_PRIORITY,         /* Priority at which the task is created. */
-                    &xHandle );               /* Used to pass out the created task's handle. */
+    // BaseType_t xReturned;
+    // TaskHandle_t xHandle = NULL;
+    // xReturned = xTaskCreate(
+    //                 vSensorReadAndSend,       /* Function that implements the task. */
+    //                 "NAME",                   /* Text name for the task. */
+    //                 512,                      /* Stack size in words, not bytes. */
+    //                 ( void * ) 1,             /* Parameter passed into the task. */
+    //                 tskIDLE_PRIORITY,         /* Priority at which the task is created. */
+    //                 &xHandle );               /* Used to pass out the created task's handle. */
 
-    TaskHandle_t xHandle2 = NULL;
-    xTaskCreate(
-                    vConnectorStart,       /* Function that implements the task. */
-                    "NAME",                   /* Text name for the task. */
-                    512,                      /* Stack size in words, not bytes. */
-                    ( void * ) 1,             /* Parameter passed into the task. */
-                    tskIDLE_PRIORITY,         /* Priority at which the task is created. */
-                    &xHandle2 );               /* Used to pass out the created task's handle. */
+    // TaskHandle_t xHandle2 = NULL;
+    // xTaskCreate(
+    //                 vConnectorStart,       /* Function that implements the task. */
+    //                 "NAME",                   /* Text name for the task. */
+    //                 51200,                      /* Stack size in words, not bytes. */
+    //                 // 5120,                      /* Stack size in words, not bytes. */
+    //                 ( void * ) 1,             /* Parameter passed into the task. */
+    //                 tskIDLE_PRIORITY,         /* Priority at which the task is created. */
+    //                 &xHandle2 );               /* Used to pass out the created task's handle. */
 }
 
 void loop() {
-    
+    // Serial.println("loop");
+    // delay(1000);
+    vConnectorStart(nullptr);
+    delay(100);
+    // Serial.println("blink up");
+    // delay(1000);
+    // Serial.println("blink down");
+    // delay(1000);
 }
