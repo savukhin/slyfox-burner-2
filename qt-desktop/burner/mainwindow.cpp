@@ -30,8 +30,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->accelXInput->setValidator(naturalValidator);
     ui->accelYInput->setValidator(naturalValidator);
 
-    auto read = this->serial.readByte();
-
     this->dropConnection();
 }
 
@@ -83,7 +81,7 @@ void MainWindow::on_refreshComsButton_clicked()
 }
 
 
-void MainWindow::on_comDropdown_currentIndexChanged(int index)
+void MainWindow::on_comDropdown_currentIndexChanged(int)
 {
     ui->selectComButton->setVisible(true);
 }

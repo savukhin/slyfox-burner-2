@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1076</width>
-    <height>670</height>
+    <width>1082</width>
+    <height>668</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -28,6 +28,15 @@
   </property>
   <property name="styleSheet">
    <string notr="true"/>
+  </property>
+  <property name="toolButtonStyle">
+   <enum>Qt::ToolButtonTextOnly</enum>
+  </property>
+  <property name="animated">
+   <bool>false</bool>
+  </property>
+  <property name="tabShape">
+   <enum>QTabWidget::Triangular</enum>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="minimumSize">
@@ -63,8 +72,14 @@ QPushButton:pressed {
 }</string>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
+    <property name="spacing">
+     <number>6</number>
+    </property>
     <property name="sizeConstraint">
      <enum>QLayout::SetMaximumSize</enum>
+    </property>
+    <property name="bottomMargin">
+     <number>9</number>
     </property>
     <item>
      <widget class="QWidget" name="options" native="true">
@@ -215,8 +230,8 @@ QPushButton:pressed {
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>348</width>
-                <height>589</height>
+                <width>334</width>
+                <height>643</height>
                </rect>
               </property>
               <property name="styleSheet">
@@ -733,12 +748,11 @@ QPushButton:pressed {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1076</width>
-     <height>22</height>
+     <width>1082</width>
+     <height>27</height>
     </rect>
    </property>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources/>
  <connections/>

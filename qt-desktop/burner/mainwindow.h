@@ -9,12 +9,14 @@ QT_END_NAMESPACE
 
 
 #include "DesktopSerial.hpp"
+#include "connector.hpp"
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 private:
     DesktopSerial serial;
+    Connector connector;
 
 public:
     MainWindow(QWidget *parent = nullptr);

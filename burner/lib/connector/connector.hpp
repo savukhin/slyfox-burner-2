@@ -4,7 +4,9 @@
 #include <stdexcept>
 #include <map>
 #include <mutex>
+#include <condition_variable>
 #include <atomic>
+#include <set>
 
 // #include "messages.hpp"
 #include "imessage.hpp"
@@ -19,10 +21,17 @@ private:
     IByteHandler* byte_handler_;
     ISerial *serial_;
 
-    std::mutex started_mutex_;
-    bool started_ = false;
+    // std::mutex started_mutex_;
+    std::atomic_bool started_ = { false };
 
-    std::atomic<long long> new_req_id; 
+    std::mutex received_mutex_;
+    std::map<long long, IHeader*> received_;
+    std::mutex waiters_mutex_;
+    std::set<long long> waiters_;
+    std::condition_variable cv_response;
+    std::mutex cv_response_mtx;
+
+    
 
     // msg_id -> function of pointer to msg and request_id
     std::map<uint8_t, subscription_type> subscriptions;
@@ -42,12 +51,36 @@ private:
 public:
     Connector(IByteHandler *byte_handler, ISerial *serial) : byte_handler_(byte_handler), serial_(serial) {}
 
+    bool waiterExists(long long req_id) {
+        bool res = false;
+        this->waiters_mutex_.lock();
+        if (waiters_.find(req_id) != waiters_.end()) {
+            res = true;
+        }
+        this->waiters_mutex_.unlock();
+
+        return res;
+    }
+
     void start(bool check_subscriptions=true) {
         started_ = true;
         while(started_) {
             auto hdr = this->tick();
 
-            this->tryCallSubscriber(hdr);
+            long long req_id = hdr->get_request_id();
+
+            bool isExist = this->waiterExists(req_id);
+
+            if (!isExist) {
+                this->tryCallSubscriber(hdr);
+                continue;
+            }
+
+            received_mutex_.lock();
+            received_[req_id] = hdr;
+            received_mutex_.unlock();
+
+            delete hdr;
         }
     }
 
@@ -84,5 +117,42 @@ public:
         
         auto packet_bytes = packet->to_bytes();
         serial_->writeBytes(packet_bytes, packet->get_length());
+    }
+
+    IHeader* sendMessageSynced(const IMessage &msg, long long req_id=0, const double& timeout=0) {
+        sendMessage(msg, req_id);
+
+        
+        std::unique_lock<std::mutex> lock(cv_response_mtx);
+        const auto predicate = [&] {
+            this->received_mutex_.lock();
+
+            const bool is_received = (this->received_.find(req_id) != this->received_.end());
+            
+            if (!is_received) {
+                this->received_mutex_.unlock();
+            }
+
+            return is_received;
+        };
+        // depending on the timeout, we may wait a fixed amount of time, or
+        // indefinitely
+        if(timeout > 0) {
+            if(!cv_response.wait_for(
+                lock,
+                std::chrono::milliseconds(size_t(timeout * 1e3)),
+                predicate)) {
+  
+                return nullptr;
+            }
+        }
+        else {
+            cv_response.wait(lock, predicate);
+        }
+
+        auto res = this->received_.find(req_id)->second;
+        this->received_mutex_.unlock();
+        return res;
+
     }
 };

@@ -6,7 +6,7 @@
 class IHeader {
 public:
     virtual int get_msg_type_id() = 0;
-    virtual int get_request_id() = 0;
+    virtual long long get_request_id() = 0;
     virtual int get_length() = 0;
     virtual int get_sum() = 0;
 

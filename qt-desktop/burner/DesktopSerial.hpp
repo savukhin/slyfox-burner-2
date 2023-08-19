@@ -26,16 +26,15 @@ public:
     }
 
     uint8_t* readByte() override {
-        uint8_t* buf;
+        QByteArray result = this->serial.read(1);
 
-        this->serial.bytesAvailable();
+        if (result.size() == 0)
+            return nullptr;
 
-//        serial.
+        char val = result[0];
 
-//        if (Serial.available() == 0)
-//            return nullptr;
-
-//        Serial.readBytes(buf, 1);
+        uint8_t* buf = new uint8_t[1];
+        buf[0] = (uint8_t)val;
 
         return buf;
     }

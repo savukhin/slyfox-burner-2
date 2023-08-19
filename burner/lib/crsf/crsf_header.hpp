@@ -85,7 +85,7 @@ public:
     }
 
     int get_msg_type_id() override { return header->msg_type_id; };
-    int get_request_id() override { return header->request_id; };
+    long long get_request_id() override { return header->request_id; };
     int get_length() override { return header->frame_size; };
     int get_sum() override {return header->crc; }
 

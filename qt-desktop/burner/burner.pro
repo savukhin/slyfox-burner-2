@@ -21,6 +21,7 @@ HEADERS += \
     ../../burner/lib/messages/imessage.hpp \
     ../../burner/lib/messages/messages.hpp \
     DesktopSerial.hpp \
+    connector.hpp \
     crsf/crc8.hpp \
     crsf/crsf_header.hpp \
     crsf/crsf_protocol.hpp \
