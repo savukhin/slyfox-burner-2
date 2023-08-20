@@ -39,6 +39,7 @@ public:
         memcpy(buf + sizeof(Msg), payload, len);
         
         auto sum = crc8.calc(buf, len + sizeof(Msg));
+        delete[] buf;
 
         header->crc = sum;
 

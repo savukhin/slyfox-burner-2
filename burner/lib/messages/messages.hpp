@@ -15,13 +15,14 @@ public:
     }
     uint8_t get_id() const override { return ID; }
     void fromBytes(void *bytes) override { this->msg_ = (T*)bytes; }
-    void* toBytes() const override { return (void*)this->msg_; }
+   void* toBytes() const override { return (void*)this->msg_; }
     long long getByteLen() const override { return sizeof(T); }
 
     ~Message() { delete this->msg_; };
 };
 
 typedef struct empty_message_s {
+    uint8_t placeholder=0;
 } PACKED empty_message_t;
 
 typedef struct response_message_s {

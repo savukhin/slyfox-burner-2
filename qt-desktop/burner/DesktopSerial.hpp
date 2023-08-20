@@ -58,7 +58,7 @@ public:
         auto res = this->serial.write(casted, length);
         qDebug() << "Wrote " << data;
         for (int i = 0; i < length; i++)
-            qDebug() << (int)data[i];
+            qDebug() << "[" << i << "]" << (int)data[i];
         qDebug() << "Len " << length;
         qDebug() << "res = " << res;
     }

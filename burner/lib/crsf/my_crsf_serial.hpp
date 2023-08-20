@@ -32,7 +32,7 @@ public:
     MyCrsfSerial() : _crc(0xd5),
         _lastReceive(0), _lastChannelsPacket(0), _linkIsUp(false),
         _passthroughMode(false) {
-            this->max_payload_length_ = (long(std::numeric_limits<Len>::max()) + 1) / 8;
+            this->max_payload_length_ = (((long long)std::numeric_limits<Len>::max()) + 1) / 8;
 
             this->max_len_param_ = sizeof(Msg) + this->max_payload_length_ + 1;
             this->min_len_param_ = sizeof(Msg) + 1 + 1;

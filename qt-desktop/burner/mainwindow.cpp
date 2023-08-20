@@ -146,7 +146,9 @@ void MainWindow::on_selectComButton_clicked()
     auto msg = GetConfigMessage();
     auto id = msg.get_id();
 
-    this->connector_->sendMessage(msg);
+    void* msg_bytes = msg.toBytes();
+
+    this->connector_->sendMessage(msg, this->generateRequestID());
     return;
 
 
