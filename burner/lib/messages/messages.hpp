@@ -10,7 +10,6 @@ protected:
 public:
     Message() { this->msg_ = new T; };
     Message(T *msg) {
-        if (msg_ != nullptr) delete this->msg_;
         this->msg_ = msg;
     }
     uint8_t get_id() const override { return ID; }

@@ -103,16 +103,6 @@ public:
     uint8_t* to_bytes() override {
         uint8_t *buf = new uint8_t[this->total_length_];
 
-
-//        Req *req = new Req;
-//        memcpy(req, &this->header->request_id, sizeof(Req));
-//        Len *len = new Len;
-//        memcpy(len, (const void*) &this->header->frame_size, sizeof(Len));
-//        Msg *msg = new Msg;
-//        memcpy(msg, (const void*) &this->header->msg_type_id, sizeof(Msg));
-//        uint8_t *crc = new uint8_t;
-//        memcpy(crc, (const void*) &this->header->crc, sizeof(uint8_t));
-
         int i = 0;
         memcpy(buf + i, &this->header->request_id, sizeof(Req));
         i += sizeof(Req);
@@ -124,13 +114,6 @@ public:
         memcpy(buf + i, header->data, this->payload_length_);
         i += this->payload_length_;
         memcpy(buf + i, &this->header->crc, 1);
-
-        int *bufi = (int*)buf;
-
-//        delete req;
-//        delete len;
-//        delete msg;
-//        delete crc;
 
         return buf;
     }

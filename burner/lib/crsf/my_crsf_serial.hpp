@@ -41,7 +41,6 @@ public:
     IHeader *makePacket(const IMessage &msg, long long req_id) override {
         void* msg_bytes = msg.toBytes();
         auto len = msg.getByteLen();
-        auto id = msg.get_id();
         return this->makePacket(req_id, len, msg.get_id(), msg_bytes);
     }
 
@@ -110,7 +109,7 @@ public:
 
 private:
     uint8_t _rxBuf[CRSF_MAX_PACKET_SIZE];
-    uint8_t _rxBufPos;
+    uint64_t _rxBufPos = 0;
     Crc8 _crc;
     crsfLinkStatistics_t _linkStatistics;
     crsf_sensor_gps_t _gpsSensor;
@@ -121,6 +120,9 @@ private:
     int _channels[CRSF_NUM_CHANNELS];
 
     Len* tryExtractLength() {
+        #ifdef ARDUINO
+        // Serial.println("tryextractlength " + String(*len_ptr));
+        #endif
         if (_rxBufPos < sizeof(Req) + sizeof(Len)) {
             return nullptr;
         }
@@ -138,6 +140,9 @@ private:
         do
         {
             reprocess = false;
+            // #ifdef ARDUINO
+            // Serial.println("_rx buf pos " + String(_rxBufPos));
+            // #endif
             if (_rxBufPos > 1)
             {
                 // uint8_t len = _rxBuf[1];
@@ -147,6 +152,10 @@ private:
                 }
 
                 Len len = *len_ptr;
+
+                // #ifdef ARDUINO
+                // Serial.println("len extracted " + String(len) + " min_len " + this->min_len_param_ + " max len " + this->max_len_param_);
+                // #endif
                 
 
                 // Sanity check the declared length isn't outside Type + X{1,CRSF_MAX_PAYLOAD_LEN} + CRC
@@ -165,7 +174,7 @@ private:
                     if (crc == inCrc)
                     {
                         result = new CrsfHeader<Req, Len, Msg>((void*)_rxBuf);
-                        shiftRxBuffer(len + 2);
+                        shiftRxBuffer(len + sizeof(Req) + sizeof(Msg) + sizeof(Len) + 1);
                         reprocess = true;
                     }
                     else

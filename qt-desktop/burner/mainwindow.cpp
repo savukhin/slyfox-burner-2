@@ -4,16 +4,22 @@
 #include <QDebug>
 #include <QRegExpValidator>
 #include <thread>
-
+#include <QThread>
 #include <QSerialPort>
 #include <QTime>
 #include <QSerialPortInfo>
 
 
+#include <connector.hpp>
+#include "connector_worker.hpp"
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
+#ifdef QT
+    qDebug() << "Defined";
+#endif
     ui->setupUi(this);
 
     qDebug() << "Started";
@@ -34,7 +40,24 @@ MainWindow::MainWindow(QWidget *parent)
     ui->accelXInput->setValidator(naturalValidator);
     ui->accelYInput->setValidator(naturalValidator);
 
-    connect(&this->serial_->serial, &QSerialPort::readyRead, this, &MainWindow::readData);
+//    connect(&this->serial_->serial, &QSerialPort::readyRead, this, &MainWindow::readData);
+
+    this->connector_->subscribe(ConfigMessage().get_id(), [&](const void* received_msg, int) {
+        qDebug() << "Received config msg";
+        config_message_t *cfg = (config_message_t*)received_msg;
+
+        ui->startXInput->setText(QString::number(cfg->x_mm));
+        ui->startYInput->setText(QString::number(cfg->y1_mm));
+        ui->endYInput->setText(QString::number(cfg->y2_mm));
+
+        ui->rapidXSpeedInput->setText(QString::number(cfg->rapid_speed_x_mm_s));
+        ui->lowXSpeedInput->setText(QString::number(cfg->slow_speed_x_mm_s));
+        ui->rapidYSpeedInput->setText(QString::number(cfg->rapid_speed_y_mm_s));
+        ui->lowYSpeedInput->setText(QString::number(cfg->slow_speed_y_mm_s));
+
+        ui->accelXInput->setText(QString::number(cfg->accel_x_mm_s2));
+        ui->accelYInput->setText(QString::number(cfg->accel_y_mm_s2));
+    });
 
     this->dropConnection();
 }
@@ -66,7 +89,8 @@ void MainWindow::on_pushButton_5_clicked()
 
 void MainWindow::on_pushButton_8_clicked()
 {
-    ui->stackedOptions->setCurrentIndex((ui->stackedOptions->currentIndex() + 1) % 2);
+    this->connector_->sendMessage(GetConfigMessage(), this->generateRequestID());
+//    ui->stackedOptions->setCurrentIndex((ui->stackedOptions->currentIndex() + 1) % 2);
 }
 
 void MainWindow::updateComsDropdown() {
@@ -103,76 +127,38 @@ long long MainWindow::generateRequestID() {
     return this->req_id;
 }
 
-void MainWindow::startConnector() {
-//    this->connector_thread_ = std::thread{&Connector::start, this->connector_};
-    this->connector_->start();
-}
-
-
 void MainWindow::on_selectComButton_clicked()
 {
     QString port = ui->comDropdown->currentText();
-////    const SettingsDialog::Settings p = m_settings->settings();
-//    serial->setPortName(port);
-//    serial->setBaudRate(115200);
-////    serial->setDataBits(QSerialPort::Data8);
-////    serial->setParity(QSerialPort::NoParity);
-////    serial->setStopBits(QSerialPort::OneStop);
-////    serial->setFlowControl(QSerialPort::NoFlowControl);
-//    if (serial->open(QIODevice::ReadWrite)) {
-//        ui->textBrowser->setEnabled(true);
-////        ui->textBrowser->setLocalEchoEnabled(p.localEchoEnabled);
-//    } else {
-//        QMessageBox::critical(this, tr("Error"), serial->errorString());
-//}
-
-//    return;
     this->serial_->setPort(port);
-//    serial->setBaudRate(115200);
 
     qDebug() << "opening";
     if (!this->serial_->open()) {
         qDebug() << "not opened";
     }
     qDebug() << "opened";
-    QTime dieTime= QTime::currentTime().addSecs(1);
-    while (QTime::currentTime() < dieTime)
-        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
 
-    qDebug() << "new thread";
-//    this->connector_thread_ = std::thread(&MainWindow::startConnector, this);
-    qDebug() << "inited";
+    QThread* thread = new QThread();
+    ConnectorWorker *worker = new ConnectorWorker(this->connector_);
+    worker->moveToThread(thread);
+
+    connect(thread, SIGNAL(started()), worker, SLOT(start()));
+    thread->start();
 
     auto msg = GetConfigMessage();
-    auto id = msg.get_id();
-
-    void* msg_bytes = msg.toBytes();
 
     this->connector_->sendMessage(msg, this->generateRequestID());
-    return;
-
-
-    auto cfg_hdr = this->connector_->sendMessageSynced(GetConfigMessage(), this->generateRequestID(), 2);
-
-    qDebug() << "print";
-    if (cfg_hdr->get_msg_type_id() != ConfigMessage().get_id()) {
-        // TODO: proccess error
-    }
-
-    config_message_t *cfg = (config_message_t*)cfg_hdr->get_payload();
-
-    ui->startXInput->setText(QString::number(cfg->x_mm));
-    ui->startYInput->setText(QString::number(cfg->y1_mm));
-    ui->endYInput->setText(QString::number(cfg->y2_mm));
-
-    ui->rapidXSpeedInput->setText(QString::number(cfg->rapid_speed_x_mm_s));
-    ui->lowXSpeedInput->setText(QString::number(cfg->slow_speed_x_mm_s));
-    ui->rapidYSpeedInput->setText(QString::number(cfg->rapid_speed_y_mm_s));
-    ui->lowYSpeedInput->setText(QString::number(cfg->slow_speed_y_mm_s));
-
-    ui->accelXInput->setText(QString::number(cfg->accel_x_mm_s2));
-    ui->accelYInput->setText(QString::number(cfg->accel_y_mm_s2));
 
     ui->stackedOptions->setCurrentIndex(1);
 }
 
+void MainWindow::closeEvent(QCloseEvent *) {
+    qDebug() << "Stopping";
+
+    if (this->connector_->isStarted()) {
+        this->connector_->stop();
+        this->serial_->close();
+        this->connector_qthread_.quit();
+    }
+    qDebug() << "Stopped";
+}

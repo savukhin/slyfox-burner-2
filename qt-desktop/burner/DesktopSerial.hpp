@@ -5,10 +5,11 @@
 #include "../../burner/lib/connector/iserial.hpp"
 #include <QSerialPort>
 #include <QDebug>
+#include <QMutex>
 
 class DesktopSerial : public ISerial {
 private:
-
+    QMutex mx;
 public:
     QSerialPort serial;
 
@@ -28,15 +29,36 @@ public:
         return this->serial.open(QIODevice::ReadWrite);
     }
 
-    void close() {
+    void close() override {
         this->serial.close();
     }
 
     uint8_t* readByte() override {
+        auto cnt = this->serial.bytesAvailable();
+
+//        qDebug() << "avail" << cnt;
+        if (cnt == 0) return nullptr;
+//        qDebug() << "ok" << cnt;
+
+
+        //qDebug() << "read" << this->serial.read(1).toHex();
+        //auto res = this->serial.read(1);
+        //return nullptr;
+        //QByteArray result = this->serial.readAll();
+        //return nullptr;
+//        while (serial.waitForReadyRead(10))
+//            result += serial.readAll();
+//        mx.lock();
+//        QByteArray tmp = this->serial.readAll();
+//        mx.unlock();
+//        return nullptr;
         QByteArray result = this->serial.read(1);
+        qDebug() << " read " << QString(result);
+//        return nullptr;
 
         if (result.size() == 0)
             return nullptr;
+
 
         char val = result[0];
 

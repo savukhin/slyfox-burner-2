@@ -26,6 +26,7 @@ HEADERS += \
     ../../burner/lib/messages/messages.hpp \
     DesktopSerial.hpp \
     connector.hpp \
+    connector_worker.hpp \
     mainwindow.h \
     settings.hpp
 
@@ -36,6 +37,7 @@ TRANSLATIONS += \
     burner_en_US.ts
 CONFIG += lrelease
 CONFIG += embed_translations
+CONFIG += console
 #CONFIG += serialport
 
 # Default rules for deployment.

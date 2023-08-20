@@ -1,3 +1,5 @@
+#define QT
+
 #include "mainwindow.h"
 
 #include <QApplication>
@@ -7,7 +9,6 @@
 #include <QTranslator>
 #include <QtCore/qglobal.h>
 #include <QDebug>
-#define QT
 
 int main(int argc, char *argv[])
 {

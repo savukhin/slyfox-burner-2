@@ -11,8 +11,10 @@ QT_END_NAMESPACE
 #include "connector.hpp"
 #include <thread>
 #include <atomic>
-
+#include <QThread>
+#include "connector_worker.hpp"
 #include "settings.hpp"
+
 
 class MainWindow : public QMainWindow
 {
@@ -23,6 +25,8 @@ private:
     IByteHandler *byte_handler_ = new MyCrsfSerial<REQ_TYPE, LEN_TYPE, MSG_TYPE>();
     Connector *connector_ = new Connector(byte_handler_, serial_);
     std::thread connector_thread_;
+    QThread connector_qthread_;
+    ConnectorWorker *worker = new ConnectorWorker(connector_);
 
     QSerialPort *serial;
 
@@ -34,7 +38,7 @@ public:
     ~MainWindow();
 
 
-    void startConnector();
+
 
 private slots:
     void on_pushButton_5_clicked();
@@ -54,7 +58,8 @@ private slots:
     long long generateRequestID();
 
     void readData();
-
+protected:
+     void closeEvent(QCloseEvent *event);
 
 private:
     Ui::MainWindow *ui;

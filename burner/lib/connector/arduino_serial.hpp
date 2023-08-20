@@ -12,18 +12,13 @@ public:
     }
 
     uint8_t* readByte() override {
-        uint8_t* buf;
-
         if (Serial.available() == 0) {
-            Serial.println("unavailable");
+            // Serial.println("una                                                                                                                                                                                                                                                                                                                                                                                                                          vailable");
             return nullptr;
         }
         
-        size_t size = Serial.readBytes(buf, 1);
-        Serial.println("read size " + String((int)size) + "' end");
-
-        if (size == 0) return nullptr;
-        Serial.println("read 1 " + String((int)buf[0]) + "' ends");
+        uint8_t *buf = new uint8_t[1] { Serial.read() };
+        // Serial.println("read 1 " + String((int)buf[0]) + "' final");
 
         return buf;
     }
@@ -35,5 +30,7 @@ public:
     void writeBytes(uint8_t *data, long length) override {
         Serial.write(data, length);
     }
+
+    void close() override {}
 };
 #endif

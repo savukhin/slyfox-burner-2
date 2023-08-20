@@ -65,9 +65,12 @@ void setup() {
 
     // Get config
     connector->subscribe(GetConfigMessage().get_id(), [](const void*, int req_id) {
-        config_message_t *msg = new config_message_t(config.toMessage());
+        config_message_t *msg = new config_message_t;
+        auto msg_cop = config.toMessage();
+        memcpy(msg, &msg_cop, sizeof(config_message_t));
         ConfigMessage result(msg);
         connector->sendMessage(result, req_id);
+        // delete msg;
     });
 
     // Set config
@@ -137,7 +140,7 @@ void loop() {
     // Serial.println("loop");
     // delay(1000);
     vConnectorStart(nullptr);
-    delay(100);
+    // delay(100);
     // Serial.println("blink up");
     // delay(1000);
     // Serial.println("blink down");
