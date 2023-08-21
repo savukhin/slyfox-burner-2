@@ -15,18 +15,12 @@ QT_END_NAMESPACE
 #include "connector_worker.hpp"
 #include "settings.hpp"
 
-
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 private:
-
-    DesktopSerial *serial_ = new DesktopSerial();
-    IByteHandler *byte_handler_ = new MyCrsfSerial<REQ_TYPE, LEN_TYPE, MSG_TYPE>();
-    Connector *connector_ = new Connector(byte_handler_, serial_);
-    std::thread connector_thread_;
-    QThread connector_qthread_;
-    ConnectorWorker *worker = new ConnectorWorker(connector_);
+    QThread *connector_qthread_;
+    ConnectorWorker *worker_ = new ConnectorWorker();
 
     QSerialPort *serial;
 
@@ -54,6 +48,8 @@ private slots:
     void on_comDropdown_currentIndexChanged(int index);
 
     void on_selectComButton_clicked();
+
+    void onConfigReceived(config_message_t *cfg);
 
     long long generateRequestID();
 

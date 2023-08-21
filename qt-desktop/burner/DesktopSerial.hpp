@@ -7,60 +7,54 @@
 #include <QDebug>
 #include <QMutex>
 
-class DesktopSerial : public ISerial {
-private:
-    QMutex mx;
-public:
-    QSerialPort serial;
 
+class DesktopSerial : public ISerial, public QObject {
+private:
+    QMutex mx_;
+    QSerialPort serial_;
+
+    QMutex buf_mx_;
+    QByteArray buf_;
+
+private slots:
+    void readData() {
+        const QByteArray data = this->serial_.readAll();
+        buf_ += data;
+    }
+
+public:
     DesktopSerial(unsigned int baud=115200) {
-        this->serial.setBaudRate(baud);
+        this->serial_.setBaudRate(baud);
+
+        connect(&this->serial_, &QSerialPort::readyRead, this, &DesktopSerial::readData);
     }
 
     void setPort(QString portName) {
-        this->serial.setPortName(portName);
-        this->serial.setDataBits(QSerialPort::Data8);
-        this->serial.setParity(QSerialPort::NoParity);
-        this->serial.setStopBits(QSerialPort::OneStop);
-        this->serial.setFlowControl(QSerialPort::NoFlowControl);
+        this->serial_.setPortName(portName);
+        this->serial_.setDataBits(QSerialPort::Data8);
+        this->serial_.setParity(QSerialPort::NoParity);
+        this->serial_.setStopBits(QSerialPort::OneStop);
+        this->serial_.setFlowControl(QSerialPort::NoFlowControl);
     }
 
     bool open() {
-        return this->serial.open(QIODevice::ReadWrite);
+        return this->serial_.open(QIODevice::ReadWrite);
     }
 
     void close() override {
-        this->serial.close();
+        this->serial_.close();
     }
 
     uint8_t* readByte() override {
-        auto cnt = this->serial.bytesAvailable();
-
-//        qDebug() << "avail" << cnt;
-        if (cnt == 0) return nullptr;
-//        qDebug() << "ok" << cnt;
-
-
-        //qDebug() << "read" << this->serial.read(1).toHex();
-        //auto res = this->serial.read(1);
-        //return nullptr;
-        //QByteArray result = this->serial.readAll();
-        //return nullptr;
-//        while (serial.waitForReadyRead(10))
-//            result += serial.readAll();
-//        mx.lock();
-//        QByteArray tmp = this->serial.readAll();
-//        mx.unlock();
-//        return nullptr;
-        QByteArray result = this->serial.read(1);
-        qDebug() << " read " << QString(result);
-//        return nullptr;
-
-        if (result.size() == 0)
+        this->buf_mx_.lock();
+        if (this->buf_.size() == 0) {
+            this->buf_mx_.unlock();
             return nullptr;
+        }
 
-
-        char val = result[0];
+        char val = buf_[0];
+        buf_.remove(0, 1);
+        this->buf_mx_.unlock();
 
         uint8_t* buf = new uint8_t[1];
         buf[0] = (uint8_t)val;
@@ -77,7 +71,7 @@ public:
 
     void writeBytes(uint8_t *data, long length) override {
         const char* casted = (const char*)data;
-        auto res = this->serial.write(casted, length);
+        auto res = this->serial_.write(casted, length);
         qDebug() << "Wrote " << data;
         for (int i = 0; i < length; i++)
             qDebug() << "[" << i << "]" << (int)data[i];

@@ -7,7 +7,7 @@
 #include <condition_variable>
 #include <atomic>
 #include <set>
-
+#define QT
 #ifdef QT
 #include <QTime>
 #include <QDebug>
@@ -84,7 +84,7 @@ public:
             // delay(50);
             #endif
             #ifdef QT
-            QThread::usleep(1);
+//            QThread::usleep(1);
             #endif
             IHeader* hdr = this->tick();
 
