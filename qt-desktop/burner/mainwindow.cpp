@@ -7,6 +7,7 @@
 #include <QThread>
 #include <QSerialPort>
 #include <QTime>
+#include <QFuture>
 #include <QSerialPortInfo>
 
 
@@ -40,15 +41,13 @@ MainWindow::MainWindow(QWidget *parent)
     ui->accelXInput->setValidator(naturalValidator);
     ui->accelYInput->setValidator(naturalValidator);
 
-    this->connector_qthread_ = new QThread;
-//    this->worker = new ConnectorWorker(this->connector_);
-    this->worker_->moveToThread(connector_qthread_);
+    //this->worker_->moveToThread(connector_qthread_);
     connect(this->worker_, &ConnectorWorker::receivedConfig, this, &MainWindow::onConfigReceived);
 
+    //connect(connector_qthread_, SIGNAL(started()), this->worker_, SLOT(start()));
+    this->worker_->start();
 
-//    connect(&this->serial_->serial, &QSerialPort::readyRead, this, &MainWindow::readData);
 
-    connect(connector_qthread_, SIGNAL(started()), this->worker_, SLOT(start()));
     connector_qthread_->start();
 //    connector_qthread_->setPriority(QThread::HighPriority);
 
@@ -89,13 +88,6 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
-
-void MainWindow::readData() {
-//    const QByteArray data = this->serial_->serial.readAll();
-//    ui->textBrowser->setText(ui->textBrowser->toPlainText() + "\n" + data);
-//    qDebug() << "read all = " << data.toHex(' ');
-}
-
 
 void MainWindow::on_pushButton_5_clicked()
 {
@@ -162,19 +154,50 @@ void MainWindow::on_selectComButton_clicked()
     }
     qDebug() << "opened";
 
-//    QThread* thread = new QThread();
-//    ConnectorWorker *worker = new ConnectorWorker(this->connector_);
-//    worker->moveToThread(thread);
+    auto msg = new GetConfigMessage();
 
-//    connect(thread, SIGNAL(started()), worker, SLOT(start()));
-//    thread->start();
-//    thread->setPriority(QThread::HighPriority);
+    qDebug() << "initial packet bytelen" << msg->getByteLen();
 
-    auto msg = GetConfigMessage();
+#define FUTURE
+//#define SYNCED
 
+#ifdef SYNCED
+    this->worker_->sendMessageSynced(msg, this->generateRequestID(), 5, [this](IHeader* h) {
+        qDebug() << "UI update";
+        this->ui->stackedOptions->setCurrentIndex(1);
+        qDebug() << "cfg conversion";
+        config_message_t *cfg = (config_message_t*)h;
+         qDebug() << "Received config msg in ui" << cfg->rapid_speed_x_mm_s;
+        this->onConfigReceived(cfg);
+         qDebug() << "this updated";
+    });
+#elif defined(FUTURE)
+    auto watcher = new QFutureWatcher<IHeader*>();
+
+    connect(watcher, &QFutureWatcher<IHeader*>::finished, [&, watcher, this]() {
+        auto h = watcher->result();
+        if (h == nullptr) {
+            qDebug() << "Received nullptr";
+            return;
+        }
+
+        this->ui->stackedOptions->setCurrentIndex(1);
+
+        config_message_t *cfg = (config_message_t*)h->get_payload();
+         qDebug() << "Received config msg in ui" << cfg->rapid_speed_x_mm_s;
+        this->onConfigReceived(cfg);
+
+         delete msg;
+    });
+
+    auto f = this->worker_->sendMessageSyncedFuture(msg, this->generateRequestID(), 5);
+    watcher->setFuture(f);
+
+#else
     this->worker_->sendMessage(msg, this->generateRequestID());
-
-    ui->stackedOptions->setCurrentIndex(1);
+    this->ui->stackedOptions->setCurrentIndex(1);
+    return;
+#endif
 }
 
 void MainWindow::closeEvent(QCloseEvent *) {
@@ -182,7 +205,45 @@ void MainWindow::closeEvent(QCloseEvent *) {
 
     if (this->worker_->isStarted()) {
         this->worker_->stop();
-        this->connector_qthread_->quit();
     }
+    this->connector_qthread_->quit();
+    this->connector_qthread_->wait();
     qDebug() << "Stopped";
 }
+
+void MainWindow::changeControlsState(bool state) {
+    this->ui->startExperimentButton->setEnabled(state);
+    this->ui->stepUpButton->setEnabled(state);
+    this->ui->stepLeftButton->setEnabled(state);
+    this->ui->stepDownButton->setEnabled(state);
+    this->ui->stepRightButton->setEnabled(state);
+
+    this->ui->stepLineEdit->setEnabled(state);
+    this->ui->startXInput->setEnabled(state);
+    this->ui->startYInput->setEnabled(state);
+    this->ui->endYInput->setEnabled(state);
+    this->ui->rapidXSpeedInput->setEnabled(state);
+    this->ui->rapidYSpeedInput->setEnabled(state);
+    this->ui->lowXSpeedInput->setEnabled(state);
+    this->ui->lowYSpeedInput->setEnabled(state);
+    this->ui->accelXInput->setEnabled(state);
+    this->ui->accelYInput->setEnabled(state);
+}
+
+void MainWindow::lockControls()
+{
+    this->changeControlsState(false);
+}
+
+
+void MainWindow::unlockControls()
+{
+    this->changeControlsState(true);
+}
+
+
+void MainWindow::on_pushButton_clicked()
+{
+    this->lockControls();
+}
+

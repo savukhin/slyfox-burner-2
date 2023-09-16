@@ -1,4 +1,4 @@
-#ifndef MAINWINDOW_H
+    #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
 #include <QMainWindow>
@@ -19,10 +19,9 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 private:
-    QThread *connector_qthread_;
+    QThread *connector_qthread_ = new QThread;
+    QThread *synced_messages_qthread_ = new QThread;
     ConnectorWorker *worker_ = new ConnectorWorker();
-
-    QSerialPort *serial;
 
     std::atomic<long long> req_id = { 1 };
     long long max_req_id = MAX_REQUEST_ID;
@@ -30,9 +29,6 @@ private:
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-
-
-
 
 private slots:
     void on_pushButton_5_clicked();
@@ -53,11 +49,16 @@ private slots:
 
     long long generateRequestID();
 
-    void readData();
+    void on_pushButton_clicked();
+
 protected:
      void closeEvent(QCloseEvent *event);
 
 private:
     Ui::MainWindow *ui;
+
+    void changeControlsState(bool state);
+    void lockControls();
+    void unlockControls();
 };
 #endif // MAINWINDOW_H

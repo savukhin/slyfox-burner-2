@@ -8,41 +8,56 @@
 #include <QMutex>
 
 
-class DesktopSerial : public ISerial, public QObject {
+class DesktopSerial : public QObject, public ISerial {
+    Q_OBJECT
+
 private:
-    QMutex mx_;
-    QSerialPort serial_;
+    QSerialPort *serial_;
 
     QMutex buf_mx_;
     QByteArray buf_;
 
 private slots:
     void readData() {
-        const QByteArray data = this->serial_.readAll();
+        const QByteArray data = this->serial_->readAll();
+        this->buf_mx_.lock();
         buf_ += data;
+        this->buf_mx_.unlock();
+        qDebug() << "received new data from serial" << data;
     }
 
+    void writeBytes_(const char *data, long length) {
+        auto res = this->serial_->write(data, length);
+        qDebug() << "serial used";
+        qDebug() << "Wrote " << data;
+        for (int i = 0; i < length; i++)
+            qDebug() << "[" << i << "]" << (int)data[i];
+        qDebug() << "Len " << length;
+        qDebug() << "res = " << res;
+    }
 public:
     DesktopSerial(unsigned int baud=115200) {
-        this->serial_.setBaudRate(baud);
+        this->serial_ = new QSerialPort(this);
+        this->serial_->setBaudRate(baud);
 
-        connect(&this->serial_, &QSerialPort::readyRead, this, &DesktopSerial::readData);
+        connect(this->serial_, &QSerialPort::readyRead, this, &DesktopSerial::readData);
+        connect(this, &DesktopSerial::newData, this, &DesktopSerial::writeBytes_);
     }
 
     void setPort(QString portName) {
-        this->serial_.setPortName(portName);
-        this->serial_.setDataBits(QSerialPort::Data8);
-        this->serial_.setParity(QSerialPort::NoParity);
-        this->serial_.setStopBits(QSerialPort::OneStop);
-        this->serial_.setFlowControl(QSerialPort::NoFlowControl);
+        this->serial_->setPortName(portName);
+        this->serial_->setDataBits(QSerialPort::Data8);
+        this->serial_->setParity(QSerialPort::NoParity);
+        this->serial_->setStopBits(QSerialPort::OneStop);
+        this->serial_->setFlowControl(QSerialPort::NoFlowControl);
     }
 
     bool open() {
-        return this->serial_.open(QIODevice::ReadWrite);
+        return this->serial_->open(QIODevice::ReadWrite);
     }
 
     void close() override {
-        this->serial_.close();
+        this->serial_->close();
     }
 
     uint8_t* readByte() override {
@@ -70,14 +85,15 @@ public:
     }
 
     void writeBytes(uint8_t *data, long length) override {
+        qDebug() << "write bytes in desktop serial";
         const char* casted = (const char*)data;
-        auto res = this->serial_.write(casted, length);
-        qDebug() << "Wrote " << data;
-        for (int i = 0; i < length; i++)
-            qDebug() << "[" << i << "]" << (int)data[i];
-        qDebug() << "Len " << length;
-        qDebug() << "res = " << res;
+        qDebug() << "use serial";
+        emit newData(casted, length);
+
     }
+signals:
+    void newData(const char* data, long length);
+
 };
 
 #endif // DESKTOPSERIAL_HPP

@@ -12,10 +12,12 @@
 #include <QTime>
 #include <QDebug>
 #include <QThread>
+#include <QMutex>
 #endif
 
 // #include "messages.hpp"
 #include "../messages/imessage.hpp"
+#include "../messages/messages.hpp"
 #include "iconnector.hpp"
 
 #include "../crsf/my_crsf_serial_interface.hpp"
@@ -32,7 +34,9 @@ private:
 
     std::mutex received_mutex_;
     std::map<long long, IHeader*> received_;
+
     std::mutex waiters_mutex_;
+
     std::set<long long> waiters_;
     std::condition_variable cv_response;
     std::mutex cv_response_mtx;
@@ -78,6 +82,10 @@ public:
 
     void start(bool check_subscriptions=true) {
         started_ = true;
+#ifdef QT
+
+      qDebug() << "connector start() called in thread" << QThread::currentThreadId();
+#endif
         while(started_) {
             #ifdef ARDUINO
             delay(1);
@@ -85,21 +93,19 @@ public:
             #endif
             #ifdef QT
 //            QThread::usleep(1);
+            QThread::yieldCurrentThread();
             #endif
             IHeader* hdr = this->tick();
 
             if (hdr == nullptr) continue;
 
-            long long req_id = hdr->get_request_id();
-            
+            long long req_id = hdr->get_request_id();   
 
 #ifdef QT
             qDebug() << "Got req " << req_id;
+            qDebug() << "Got req type " << hdr->get_msg_type_id();
+            qDebug() << "Got req in thread" << QThread::currentThreadId();
 #endif
-
-            this->tryCallSubscriber(hdr);
-            delete hdr;
-            continue;
 
             bool isExist = this->waiterExists(req_id);
 #ifdef QT
@@ -109,18 +115,18 @@ public:
                 if (check_subscriptions)
                     this->tryCallSubscriber(hdr);
 
+                delete hdr;
                 continue;
             }
 
             received_mutex_.lock();
+            qDebug() << "Wrote to req_id" << req_id;
             received_[req_id] = hdr;
             received_mutex_.unlock();
             waiters_mutex_.unlock();
 #ifdef QT
-            qDebug() << "Added to map";
+            qDebug() << "Added to map" << received_[req_id]->get_msg_type_id();
 #endif
-
-            delete hdr;
         }
     }
 
@@ -131,18 +137,12 @@ public:
     bool isStarted() { return started_; }
 
     IHeader* tick() {
-        #ifdef ARDUINO
-        // Serial.println("tick");
-        // Serial.flush();
-        #endif
-
         if (this->serial_ == nullptr) 
             throw new std::runtime_error("no readbyte function implemented");
         if (this->byte_handler_ == nullptr) 
             throw new std::runtime_error("no byte handler implemented");
 
         uint8_t *byte_ref = serial_->readByte();
-//        return nullptr;
 
         if (!byte_ref) return nullptr;
 
@@ -151,23 +151,17 @@ public:
         //Serial.println("Received byte " + (int)byte);
         //Serial.flush();
         #endif
-#ifdef QT
-        //qDebug() << "received byte " << byte;
-#endif
 
         auto result = this->byte_handler_->handleByte(byte);
+#ifdef QT
+//        qDebug() << "package rapid_speed in connector " << ((config_message_t*)result->get_payload())->rapid_speed_x_mm_s;
+#endif
         // #ifdef ARDUINO
         // if (result)
         //     Serial.println("yes-result=" + String(result->get_msg_type_id()));
         // else
         //     Serial.println("no-result");
         // #endif
-//         #ifdef QT
-//         if (result)
-//             qDebug() << "yes-result=" << result->get_msg_type_id();
-//         else
-//             qDebug() << "no-result";
-//         #endif
 
         return result;
     }
@@ -184,72 +178,102 @@ public:
         auto packet = this->byte_handler_->makePacket(msg, req_id);
         
         auto packet_bytes = packet->to_bytes();
+#ifdef QT
+        qDebug() << "write bytes length" << packet->get_total_length() << " while bytelen " << msg.getByteLen();
+#endif
         serial_->writeBytes(packet_bytes, packet->get_total_length());
     }
 
-//     IHeader* sendMessageSynced(const IMessage &msg, long long req_id=0, const double& timeout_s=0) {
-//         this->waiters_mutex_.lock();
-//         this->waiters_.insert(req_id);
-//         this->waiters_mutex_.unlock();
-//         sendMessage(msg, req_id);
+     IHeader* sendMessageSynced(const IMessage &msg, long long req_id=0, const double timeout_s=1) {
+         this->waiters_mutex_.lock();
+         this->waiters_.insert(req_id);
+         this->waiters_mutex_.unlock();
+#ifdef QT
+        qDebug() << "Sending message len" << msg.getByteLen();
+#endif
+         sendMessage(msg, req_id);
+//         return nullptr;
 
-// #ifdef QT
-//         qDebug() << "Started waiting " << req_id;
-//         bool is_received = false;
+ #ifdef QT
+         qDebug() << "Started waiting " << req_id;
+         qDebug() << "Sending message in common connector in thread" << QThread::currentThreadId();
+         bool is_received = false;
 
-//         QTime dieTime= QTime::currentTime().addSecs(timeout_s);
-//         while (!is_received && QTime::currentTime() < dieTime) {
-//             this->received_mutex_.lock();
+         qDebug() << "Received keys:";
+         for (auto [key, value] : this->received_) {
+             qDebug() << key;
+         }
+
+         QTime dieTime= QTime::currentTime().addSecs(timeout_s);
+         qDebug() << "dieTime" << dieTime << "current Timr" << QTime::currentTime() << "timeout s =" << timeout_s;
+         while (started_ && !is_received && QTime::currentTime() < dieTime) {
+             this->received_mutex_.lock();
 //             is_received = (this->received_.find(req_id) != this->received_.end());
-//             this->received_mutex_.unlock();
+             is_received = (this->received_.count(req_id));
+             this->received_mutex_.unlock();
 
-//             QThread::msleep(1000);
-//         }
+//             QThread::msleep(10);
+             QThread::yieldCurrentThread();
+//             QThread::usleep(1);
+         }
 
-//         if (QTime::currentTime() > dieTime) {
-//             return nullptr;
-//         }
+         if (QTime::currentTime() >= dieTime || !started_) {
+             qDebug() << "Timeout happened or stated_ =" << started_;
+             return nullptr;
+         }
 
-//         this->received_mutex_.lock();
-// #else
+         qDebug() << "Found! received = " << is_received << "but count =" << this->received_.count(req_id) << "converted "<< bool(this->received_.count(req_id));
 
-//         std::unique_lock<std::mutex> lock(cv_response_mtx);
-//         const auto predicate = [&] {
-//             this->received_mutex_.lock();
+         this->received_mutex_.lock();
+ #else
 
-//             const bool is_received = (this->received_.find(req_id) != this->received_.end());
+         std::unique_lock<std::mutex> lock(cv_response_mtx);
+         const auto predicate = [&] {
+             this->received_mutex_.lock();
+
+             const bool is_received = (this->received_.find(req_id) != this->received_.end());
             
-//             if (!is_received) {
-//                 this->received_mutex_.unlock();
-//             }
+             if (!is_received) {
+                 this->received_mutex_.unlock();
+             }
 
-//             return is_received;
-//         };
-//         // depending on the timeout, we may wait a fixed amount of time, or
-//         // indefinitely
-//         if(timeout_s > 0) {
-//             if(!cv_response.wait_for(
-//                 lock,
-//                 std::chrono::milliseconds(size_t(timeout_s * 1e3)),
-//                 predicate)) {
+             return is_received;
+         };
+         // depending on the timeout, we may wait a fixed amount of time, or
+         // indefinitely
+         if(timeout_s > 0) {
+             if(!cv_response.wait_for(
+                 lock,
+                 std::chrono::milliseconds(size_t(timeout_s * 1e3)),
+                 predicate)) {
   
-//                 return nullptr;
-//             }
-//         }
-//         else {
-//             cv_response.wait(lock, predicate);
-//         }
-// #endif
+                 return nullptr;
+             }
+         }
+         else {
+             cv_response.wait(lock, predicate);
+         }
+ #endif
 
-//         auto res = this->received_.find(req_id)->second;
-//         this->received_.erase(req_id);
-//         this->received_mutex_.unlock();
+         auto res = this->received_[req_id];
+#ifdef QT
+         qDebug() << "got res from received_" << (res ? QString::number(res->get_msg_type_id()) : "nullptr");
+#endif
+         this->received_.erase(req_id);
+         this->received_mutex_.unlock();
 
-//         this->waiters_mutex_.lock();
-//         this->waiters_.erase(req_id);
-//         this->waiters_mutex_.unlock();
+         this->waiters_mutex_.lock();
+         this->waiters_.erase(req_id);
+         this->waiters_mutex_.unlock();
 
-//         return res;
+#ifdef QT
+      qDebug() << "returning res from connector "<< (res ? QString::number(res->get_msg_type_id()) : "nullptr");
+      if (res != nullptr) {
+        config_message_t *cfg = (config_message_t*)res->get_payload();
+        qDebug() << "returning config rapix from connector" << cfg->rapid_speed_x_mm_s;
+      }
+#endif
+         return res;
 
-//     }
+     }
 };
