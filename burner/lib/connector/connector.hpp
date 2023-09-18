@@ -120,7 +120,6 @@ public:
             }
 
             received_mutex_.lock();
-            qDebug() << "Wrote to req_id" << req_id;
             received_[req_id] = hdr;
             received_mutex_.unlock();
             waiters_mutex_.unlock();
@@ -199,11 +198,6 @@ public:
          qDebug() << "Sending message in common connector in thread" << QThread::currentThreadId();
          bool is_received = false;
 
-         qDebug() << "Received keys:";
-         for (auto [key, value] : this->received_) {
-             qDebug() << key;
-         }
-
          QTime dieTime= QTime::currentTime().addSecs(timeout_s);
          qDebug() << "dieTime" << dieTime << "current Timr" << QTime::currentTime() << "timeout s =" << timeout_s;
          while (started_ && !is_received && QTime::currentTime() < dieTime) {
@@ -268,10 +262,10 @@ public:
 
 #ifdef QT
       qDebug() << "returning res from connector "<< (res ? QString::number(res->get_msg_type_id()) : "nullptr");
-      if (res != nullptr) {
-        config_message_t *cfg = (config_message_t*)res->get_payload();
-        qDebug() << "returning config rapix from connector" << cfg->rapid_speed_x_mm_s;
-      }
+//      if (res != nullptr) {
+//        config_message_t *cfg = (config_message_t*)res->get_payload();
+//        qDebug() << "returning config rapix from connector" << cfg->rapid_speed_x_mm_s;
+//      }
 #endif
          return res;
 

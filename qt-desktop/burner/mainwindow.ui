@@ -173,6 +173,37 @@ QPushButton:pressed {
             </widget>
            </item>
            <item>
+            <spacer name="verticalSpacer_3">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Fixed</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>2</width>
+               <height>5</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QLabel" name="connectionErrorsLabel">
+             <property name="styleSheet">
+              <string notr="true">color: rgb(255, 0, 0);
+background-color: rgba(255, 0, 0, 0.1);
+padding: 3px;</string>
+             </property>
+             <property name="text">
+              <string>TextLabel</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
             <spacer name="verticalSpacer_2">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
@@ -469,6 +500,9 @@ QPushButton:pressed {
                     <property name="text">
                      <string>10</string>
                     </property>
+                    <property name="readOnly">
+                     <bool>false</bool>
+                    </property>
                    </widget>
                   </item>
                   <item row="0" column="0">
@@ -482,6 +516,9 @@ QPushButton:pressed {
                    <widget class="QLineEdit" name="startYInput">
                     <property name="text">
                      <string>10</string>
+                    </property>
+                    <property name="readOnly">
+                     <bool>false</bool>
                     </property>
                    </widget>
                   </item>
@@ -503,6 +540,9 @@ QPushButton:pressed {
                    <widget class="QLineEdit" name="endYInput">
                     <property name="text">
                      <string>10</string>
+                    </property>
+                    <property name="readOnly">
+                     <bool>false</bool>
                     </property>
                    </widget>
                   </item>
@@ -733,6 +773,26 @@ QPushButton:pressed {
           <widget class="QPushButton" name="pushButton_8">
            <property name="text">
             <string>PushButton</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="currentXInput">
+           <property name="text">
+            <string>10</string>
+           </property>
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="currentYInput">
+           <property name="text">
+            <string>12</string>
+           </property>
+           <property name="readOnly">
+            <bool>true</bool>
            </property>
           </widget>
          </item>

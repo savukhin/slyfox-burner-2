@@ -95,13 +95,28 @@ void setup() {
         }
 
         MoveResponse moved = carriage->moveTo(msg->position_mm, speed, config.getAccel(isXAxis));
-        auto resp_msg = new motor_move_message_t{moved.final_position_mm, msg->misc};
-        if (moved.interrupted) {
-            resp_msg->misc = (resp_msg->misc | 0x04);
-        }
-        MotorMoveMessage response(resp_msg);
+        // auto resp_msg = new motor_move_message_t{moved.final_position_mm, msg->misc};
+        // if (moved.interrupted) {
+        //     resp_msg->misc = (resp_msg->misc | 0x04);
+        // }
+
+        auto resp_msg = new current_position_message_t{
+            carriage_x->getCurrentPosition(),
+            carriage_y->getCurrentPosition()
+        };
+
+        CurrentPositionMessage response(resp_msg);
         connector->sendMessage(response, req_id);
-        delete resp_msg;
+    });
+
+    connector->subscribe(GetCurrentPositionMessage().get_id(), [](const void* received_msg, int req_id) {
+        auto resp_msg = new current_position_message_t{
+            carriage_x->getCurrentPosition(),
+            carriage_y->getCurrentPosition()
+        };
+        
+        CurrentPositionMessage response(resp_msg);
+        connector->sendMessage(response, req_id);
     });
 
     connector->subscribe(StartExperimentMessage().get_id(), [](const void*, int req_id) {

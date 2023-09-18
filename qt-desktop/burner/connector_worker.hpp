@@ -208,7 +208,6 @@ public:
             return (IHeader*)nullptr;
 
         this->sync_busy_ = true;
-         qDebug() << "connector->sendmessagecynced bytelen" << msg->getByteLen();
 
         auto res = this->connector_->sendMessageSynced(*msg, req_id, timeout_s);
         qDebug() << "connector message sended in thread" << QThread::currentThreadId();

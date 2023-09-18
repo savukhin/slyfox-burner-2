@@ -46,12 +46,17 @@ typedef struct config_message_s {
 } PACKED config_message_t;
 
 typedef struct motor_move_message_s {
-    float position_mm;
+    double position_mm;
     uint8_t misc; 
     // misc & 0x01 = axis (0 = X, 1 = Y)
     // misc & 0x02 = speed (0 = slow, 1 - rapid); 
     // misc & 0x04 = interrupt (1 = true, 0 = false)
 } PACKED motor_move_message_t;
+
+typedef struct current_position_message_s {
+    double x;
+    double y;
+} PACKED current_position_message_t;
 
 typedef struct start_experiment_s {
 } PACKED start_experiment_t;
@@ -99,6 +104,8 @@ public:
         response_message_t *msg = new response_message_t{status_code};
         this->msg_ = msg;
     };
+
+    ~ResponseMessage_()  = default;
 };
 
 using EmptyMessage = Message<empty_message_t, 1>;
@@ -106,8 +113,10 @@ using ResponseMessage = ResponseMessage_<2>;
 using ConfigMessage = Message<config_message_t, 3>;
 using GetConfigMessage = Message<empty_message_t, 4>;
 using MotorMoveMessage = Message<motor_move_message_t, 5>;
+using GetCurrentPositionMessage = Message<empty_message_t, 6>;
+using CurrentPositionMessage = Message<current_position_message_t, 7>;
 template<uint8_t Len>
-using SensorsMessage = SensorsMessage_<6, Len>;
-using StartExperimentMessage = Message<start_experiment_t, 7>;
-using GetExperimentStateMessage = Message<get_experiment_state_t, 8>;
-using StopExperimentMessage = Message<empty_message_t, 9>;
+using SensorsMessage = SensorsMessage_<8, Len>;
+using StartExperimentMessage = Message<start_experiment_t, 9>;
+using GetExperimentStateMessage = Message<get_experiment_state_t, 10>;
+using StopExperimentMessage = Message<empty_message_t, 11>;

@@ -15,6 +15,18 @@ QT_END_NAMESPACE
 #include "connector_worker.hpp"
 #include "settings.hpp"
 
+enum StepDirection {
+    Up = 1,
+    Down,
+    Left,
+    Right
+};
+
+enum Axis {
+    X = 1,
+    Y
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -25,6 +37,42 @@ private:
 
     std::atomic<long long> req_id = { 1 };
     long long max_req_id = MAX_REQUEST_ID;
+
+    void setConnectionError(QString error);
+    void clearConnectionError();
+
+    void connectCOM(QString port);
+
+    template<typename T>
+    T* query(const IMessage *msg) {
+        this->lockControls();
+        auto f = this->worker_->sendMessageSyncedFuture(msg, this->generateRequestID(), 3);
+
+        auto h = f.result();
+        qDebug() << "Got result in MainWindow::query";
+        this->unlockControls();
+
+        if (h == nullptr) {
+            return nullptr;
+        }
+
+        qDebug() << "create payload origin";
+        void *payload_origin = h->get_payload();
+        qDebug() << "create payload_copied";
+        char *payload_copied = new char[sizeof(T)];
+        qDebug() << "memcpy";
+        memcpy(payload_copied, payload_origin, sizeof(T));
+        qDebug() << "delete h";
+        delete h;
+
+
+        qDebug() << "Create res";
+        T *res = (T*)payload_copied;
+        qDebug() << "returning";
+        return res;
+    }
+
+    long long generateRequestID();
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -46,10 +94,11 @@ private slots:
     void on_selectComButton_clicked();
 
     void onConfigReceived(config_message_t *cfg);
-
-    long long generateRequestID();
+    void onCurrentPositionReceived(current_position_message_t *cfg);
 
     void on_pushButton_clicked();
+
+    void on_stepUpButton_clicked();
 
 protected:
      void closeEvent(QCloseEvent *event);
@@ -60,5 +109,18 @@ private:
     void changeControlsState(bool state);
     void lockControls();
     void unlockControls();
+
+    config_message_t *getConfig();
+    current_position_message_t* getCurrentPosition();
+
+    config_message_t *createConfigMessage();
+
+    void sendUpdatedConfig(config_message_t *cfg);
+    void sendMove(Axis axis, double stepMm);
+
+    void stepCnc(StepDirection dir, double stepMm);
+
+signals:
+    void changePage(int index);
 };
 #endif // MAINWINDOW_H

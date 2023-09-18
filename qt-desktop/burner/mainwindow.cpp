@@ -25,14 +25,20 @@ MainWindow::MainWindow(QWidget *parent)
 
     qDebug() << "Started";
 
-    QRegExp naturalRegex("^[1-9][0-9]*$");
+    QRegExp naturalRegex("^[1-9][0-9]{1,4}$");
     QRegExpValidator *naturalValidator = new QRegExpValidator(naturalRegex, this);
+
+    QRegExp digitRegex("^[-+]?[0-9]{1,5}$");
+    QRegExpValidator *digitValidator = new QRegExpValidator(digitRegex, this);
 
     ui->stepLineEdit->setValidator(naturalValidator);
 
-    ui->startXInput->setValidator(naturalValidator);
-    ui->startYInput->setValidator(naturalValidator);
-    ui->endYInput->setValidator(naturalValidator);
+    ui->currentXInput->setValidator(digitValidator);
+    ui->currentYInput->setValidator(digitValidator);
+
+    ui->startXInput->setValidator(digitValidator);
+    ui->startYInput->setValidator(digitValidator);
+    ui->endYInput->setValidator(digitValidator);
 
     ui->rapidXSpeedInput->setValidator(naturalValidator);
     ui->rapidYSpeedInput->setValidator(naturalValidator);
@@ -41,8 +47,11 @@ MainWindow::MainWindow(QWidget *parent)
     ui->accelXInput->setValidator(naturalValidator);
     ui->accelYInput->setValidator(naturalValidator);
 
+    ui->connectionErrorsLabel->setVisible(false);
+
     //this->worker_->moveToThread(connector_qthread_);
     connect(this->worker_, &ConnectorWorker::receivedConfig, this, &MainWindow::onConfigReceived);
+    connect(this, &MainWindow::changePage, this->ui->stackedOptions, &QStackedWidget::setCurrentIndex);
 
     //connect(connector_qthread_, SIGNAL(started()), this->worker_, SLOT(start()));
     this->worker_->start();
@@ -82,6 +91,11 @@ void MainWindow::onConfigReceived(config_message_t* cfg) {
     ui->accelYInput->setText(QString::number(cfg->accel_y_mm_s2));
 
 //    qDebug() << "rapid x speed =" << cfg->rapid_speed_x_mm_s << "start x" << cfg->x_mm;
+}
+
+void MainWindow::onCurrentPositionReceived(current_position_message_t* position) {
+    ui->currentXInput->setText(QString::number(position->x));
+    ui->currentYInput->setText(QString::number(position->y));
 }
 
 MainWindow::~MainWindow()
@@ -143,6 +157,58 @@ long long MainWindow::generateRequestID() {
     return this->req_id;
 }
 
+config_message_t* MainWindow::getConfig() {
+    auto msg = new GetConfigMessage();
+
+    auto cfg = this->query<config_message_t>(msg);
+    delete msg;
+
+    if (cfg == nullptr) {
+        return nullptr;
+    }
+
+    return cfg;
+}
+
+current_position_message_t* MainWindow::getCurrentPosition() {
+    auto msg = new GetCurrentPositionMessage();
+
+    auto pos = this->query<current_position_message_t>(msg);
+    delete msg;
+
+    if (pos == nullptr) {
+        return nullptr;
+    }
+
+    return pos;
+}
+
+void MainWindow::connectCOM(QString port) {
+    config_message_t* cfg = this->getConfig();
+
+    if (cfg == nullptr) {
+        QString error = "Cannot connect to port " + port;
+        this->setConnectionError(error);
+        return;
+    }
+
+    auto pos = this->getCurrentPosition();
+
+    if (pos == nullptr) {
+        QString error = "Cannot get current position";
+        this->setConnectionError(error);
+        return;
+    }
+
+    this->onConfigReceived(cfg);
+    this->onCurrentPositionReceived(pos);
+
+    delete[] cfg;
+    delete[] pos;
+
+    emit this->changePage(1);
+}
+
 void MainWindow::on_selectComButton_clicked()
 {
     QString port = ui->comDropdown->currentText();
@@ -153,6 +219,10 @@ void MainWindow::on_selectComButton_clicked()
         qDebug() << "not opened";
     }
     qDebug() << "opened";
+
+    QtConcurrent::run(this, &MainWindow::connectCOM, port);
+
+    return;
 
     auto msg = new GetConfigMessage();
 
@@ -174,10 +244,16 @@ void MainWindow::on_selectComButton_clicked()
 #elif defined(FUTURE)
     auto watcher = new QFutureWatcher<IHeader*>();
 
-    connect(watcher, &QFutureWatcher<IHeader*>::finished, [&, watcher, this]() {
+    connect(watcher, &QFutureWatcher<IHeader*>::finished, std::bind([&, this](QString p) {
         auto h = watcher->result();
+        this->unlockControls();
+
         if (h == nullptr) {
             qDebug() << "Received nullptr";
+//            qDebug() << "concat = " << "Cannot connect to port" + port;
+            QString error = "Cannot connect to port" + p;
+            qDebug() << "concat = " << error;
+            this->setConnectionError(error);
             return;
         }
 
@@ -188,8 +264,9 @@ void MainWindow::on_selectComButton_clicked()
         this->onConfigReceived(cfg);
 
          delete msg;
-    });
+    }, port));
 
+    this->lockControls();
     auto f = this->worker_->sendMessageSyncedFuture(msg, this->generateRequestID(), 5);
     watcher->setFuture(f);
 
@@ -212,6 +289,10 @@ void MainWindow::closeEvent(QCloseEvent *) {
 }
 
 void MainWindow::changeControlsState(bool state) {
+    this->ui->refreshComsButton->setEnabled(state);
+    this->ui->selectComButton->setEnabled(state);
+    this->ui->comDropdown->setEnabled(state);
+
     this->ui->startExperimentButton->setEnabled(state);
     this->ui->stepUpButton->setEnabled(state);
     this->ui->stepLeftButton->setEnabled(state);
@@ -241,9 +322,58 @@ void MainWindow::unlockControls()
     this->changeControlsState(true);
 }
 
+void MainWindow::setConnectionError(QString error) {
+    this->ui->connectionErrorsLabel->setVisible(true);
+    this->ui->connectionErrorsLabel->setText(error);
+}
+
+void MainWindow::clearConnectionError() {
+    this->ui->connectionErrorsLabel->setVisible(false);
+    this->ui->connectionErrorsLabel->setText("No errors");
+}
 
 void MainWindow::on_pushButton_clicked()
 {
     this->lockControls();
+}
+
+config_message_t *MainWindow::createConfigMessage() {
+    config_message_t *cfg = new config_message_t;
+    cfg->rapid_speed_x_mm_s = this->ui->rapidXSpeedInput->text().toUInt();
+    cfg->slow_speed_x_mm_s = this->ui->lowXSpeedInput->text().toUInt();
+    cfg->rapid_speed_y_mm_s = this->ui->rapidYSpeedInput->text().toUInt();
+    cfg->slow_speed_y_mm_s = this->ui->lowYSpeedInput->text().toUInt();
+
+    cfg->accel_x_mm_s2 = this->ui->accelXInput->text().toUInt();
+    cfg->accel_y_mm_s2 = this->ui->accelYInput->text().toUInt();
+
+    cfg->x_mm = this->ui->startXInput->text().toUInt();
+    cfg->y1_mm = this->ui->startYInput->text().toUInt();
+    cfg->y2_mm = this->ui->endYInput->text().toUInt();
+
+    return cfg;
+}
+
+void MainWindow::sendUpdatedConfig(config_message_t *cfg) {
+    auto msg = new ConfigMessage(cfg);
+    auto resp = this->query<response_message_t>(msg);
+    qDebug() << "315";
+    if (resp == nullptr) {
+        qDebug() << "Cannot connect to COM";
+        return;
+    }
+
+    delete msg;
+    delete[] resp;
+}
+
+void MainWindow::stepCnc(StepDirection dir, double stepMm) {
+    auto *cfg = this->createConfigMessage();
+    this->sendUpdatedConfig(cfg);
+}
+
+void MainWindow::on_stepUpButton_clicked()
+{
+    QtConcurrent::run(this, &MainWindow::stepCnc, StepDirection::Up, this->ui->stepLineEdit->text().toDouble());
 }
 

@@ -12,5 +12,5 @@ public:
     IMessage() = default;
     IMessage(const IMessage*) {};
 
-    ~IMessage() = default;
+    virtual ~IMessage() = default;
 };
