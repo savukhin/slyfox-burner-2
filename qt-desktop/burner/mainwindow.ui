@@ -725,6 +725,18 @@ padding: 3px;</string>
                 </widget>
                </item>
                <item>
+                <widget class="QPushButton" name="interruptButton">
+                 <property name="styleSheet">
+                  <string notr="true">background-color: rgb(255, 85, 0);
+background-color: rgb(170, 0, 0);
+background-color: rgb(250, 50, 50);</string>
+                 </property>
+                 <property name="text">
+                  <string>Interrupt</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <widget class="QPushButton" name="startExperimentButton">
                  <property name="text">
                   <string>Start Experiment</string>

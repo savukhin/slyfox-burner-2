@@ -147,6 +147,21 @@ public:
             emit this->receivedConfig(cfg);
         });
 
+        this->connector_->subscribe(CurrentPositionMessage().get_id(), [&](const void* received_msg, int) {
+            current_position_message_t *pos = (current_position_message_t*)received_msg;
+            emit this->receivedCurrentPosition(pos);
+        });
+
+        this->connector_->subscribe(InterruptResponseMessage().get_id(), [&](const void* received_msg, int) {
+            response_message_t *pos = (response_message_t*)received_msg;
+            emit this->receivedInterruptResponse(pos);
+        });
+
+        this->connector_->subscribe(ExperimentFinishedMessage().get_id(), [&](const void* received_msg, int) {
+            response_message_t *pos = (response_message_t*)received_msg;
+            emit this->receivedExperimentFinished(pos);
+        });
+
         qDebug() << "constructor connectorworker in thread" << QThread::currentThreadId();
         sync_message_worker_->moveToThread(sync_message_thread_);
         async_read_worker_->moveToThread(async_read_thread_);
@@ -276,6 +291,9 @@ public:
 
 signals:
     void receivedConfig(config_message_t *cfg);
+    void receivedCurrentPosition(current_position_message_t *pos);
+    void receivedInterruptResponse(response_message_t *resp);
+    void receivedExperimentFinished(response_message_t *resp);
 };
 
 #endif // CONNECTOR_WORKER_HPP

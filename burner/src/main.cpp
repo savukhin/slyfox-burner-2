@@ -81,6 +81,14 @@ void setup() {
         delete msg;
     });
 
+    connector->subscribe(InterruptMessage().get_id(), [](const void* received_msg, int req_id) {
+        if (experiment->is_started()) experiment->stop();
+        if (carriage_x->isBusy()) carriage_x->stop();
+        if (carriage_y->isBusy()) carriage_y->stop();
+
+        connector->sendMessage(InterruptResponseMessage(0), req_id);
+    });
+
     connector->subscribe(MotorMoveMessage().get_id(), [](const void* received_msg, int req_id) {
         motor_move_message_t *msg = (motor_move_message_t*)received_msg;
         bool isXAxis = ((msg->misc & 0x01) == 0);

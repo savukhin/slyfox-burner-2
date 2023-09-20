@@ -31,7 +31,7 @@ Y-axis            -----
 
 class Experiment : public IExperiment {
 private:
-    std::atomic_bool started_;
+    std::atomic_bool started_ = { false };
     ICarriage *carriage_x_;
     ICarriage *carriage_y_;
     IIgnitor *ignitor_;
@@ -41,6 +41,8 @@ public:
         carriage_x_(carriage_x), carriage_y_(carriage_y), ignitor_(ignitor) {}
 
     bool start(const Config &config) override {
+        started_ = true;
+
         config_message_t cfg = config.toMessage();
         
         MoveResponse res;
@@ -74,7 +76,12 @@ public:
         return true;
     }
 
+    bool is_started() override {
+        return started_;
+    }
+
     bool stop() override {
-        return (carriage_y_->stop() || carriage_x_->stop());
+        started_ = false;
+        return (carriage_y_->stop() || carriage_x_->stop() || ignitor_->stop(););
     }
 };

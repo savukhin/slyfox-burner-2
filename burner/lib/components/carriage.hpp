@@ -19,8 +19,7 @@ private:
     int pulse_per_mm_;
     int mm_per_pulse_;
 
-    std::mutex busy_mutex_;
-    bool busy_;
+    std::aotmic_bool busy_;
 
     std::atomic_bool paused_;
     std::atomic_bool need_stop_;
@@ -38,9 +37,7 @@ public:
             throw new std::runtime_error("no motor defined");
         }
 
-        this->busy_mutex_.lock();
         this->busy_ = true;
-        this->busy_mutex_.unlock();
 
         float desired_position_mm = position_mm;
         if (position_mm > this->max_position_mm_) {
@@ -103,9 +100,7 @@ public:
             last_frame_speed_mm_s = current_speed_mm_s;
         }
 
-        this->busy_mutex_.lock();
         this->busy_ = false;
-        this->busy_mutex_.unlock();
 
         return MoveResponse{this->current_position_mm_, interrupted};
     }
@@ -117,11 +112,7 @@ public:
     float getCurrentPosition() override { return this->current_position_mm_; }
     
     bool isBusy() override {
-        bool result;
-        this->busy_mutex_.lock();
-        result = this->busy_;
-        this->busy_mutex_.unlock();
-        return result;
+        return this->busy_;
     }
 
     bool pause() {

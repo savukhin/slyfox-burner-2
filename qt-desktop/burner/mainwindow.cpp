@@ -49,8 +49,14 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->connectionErrorsLabel->setVisible(false);
 
+    ui->interruptButton->hide();
+
     //this->worker_->moveToThread(connector_qthread_);
     connect(this->worker_, &ConnectorWorker::receivedConfig, this, &MainWindow::onConfigReceived);
+    connect(this->worker_, &ConnectorWorker::receivedCurrentPosition, this, &MainWindow::onCurrentPositionReceived);
+    connect(this->worker_, &ConnectorWorker::receivedInterruptResponse, this, &MainWindow::onInterruptResponse);
+    connect(this->worker_, &ConnectorWorker::receivedExperimentFinished, this, &MainWindow::onCurrentExperimentFinished);
+
     connect(this, &MainWindow::changePage, this->ui->stackedOptions, &QStackedWidget::setCurrentIndex);
 
     //connect(connector_qthread_, SIGNAL(started()), this->worker_, SLOT(start()));
@@ -96,6 +102,14 @@ void MainWindow::onConfigReceived(config_message_t* cfg) {
 void MainWindow::onCurrentPositionReceived(current_position_message_t* position) {
     ui->currentXInput->setText(QString::number(position->x));
     ui->currentYInput->setText(QString::number(position->y));
+}
+
+void MainWindow::onInterruptResponse(response_message_t *) {
+    this->unlockControls();
+}
+
+void MainWindow::onCurrentExperimentFinished(response_message_t *) {
+    this->unlockControls();
 }
 
 MainWindow::~MainWindow()
@@ -195,6 +209,7 @@ void MainWindow::connectCOM(QString port) {
     auto pos = this->getCurrentPosition();
 
     if (pos == nullptr) {
+        delete[] cfg;
         QString error = "Cannot get current position";
         this->setConnectionError(error);
         return;
@@ -313,12 +328,16 @@ void MainWindow::changeControlsState(bool state) {
 
 void MainWindow::lockControls()
 {
+    ui->interruptButton->show();
+    ui->startExperimentButton->hide();
     this->changeControlsState(false);
 }
 
 
 void MainWindow::unlockControls()
 {
+    ui->interruptButton->hide();
+    ui->startExperimentButton->show();
     this->changeControlsState(true);
 }
 
@@ -354,26 +373,153 @@ config_message_t *MainWindow::createConfigMessage() {
     return cfg;
 }
 
+motor_move_message_t *MainWindow::createMoveMessage(const StepDirection dir, const double stepMm) {
+    auto msg = new motor_move_message_t;
+
+    double current_position_mm;
+    switch (dir) {
+    case StepDirection::Up:
+        current_position_mm = this->ui->currentXInput->text().toDouble();
+        msg->misc = 0x00;
+        break;
+    case StepDirection::Down:
+        current_position_mm = this->ui->currentXInput->text().toDouble();
+        msg->misc = 0x00;
+        break;
+    case StepDirection::Left:
+        current_position_mm = this->ui->currentYInput->text().toDouble();
+        msg->misc = 0x01;
+        break;
+    case StepDirection::Right:
+        current_position_mm = this->ui->currentYInput->text().toDouble();
+        msg->misc = 0x01;
+        break;
+    }
+
+    msg->position_mm = current_position_mm + stepMm;
+
+    return msg;
+}
+
 void MainWindow::sendUpdatedConfig(config_message_t *cfg) {
     auto msg = new ConfigMessage(cfg);
     auto resp = this->query<response_message_t>(msg);
-    qDebug() << "315";
+    delete msg;
+
     if (resp == nullptr) {
         qDebug() << "Cannot connect to COM";
         return;
     }
 
-    delete msg;
     delete[] resp;
 }
 
-void MainWindow::stepCnc(StepDirection dir, double stepMm) {
+current_position_message_t *MainWindow::sendMove(motor_move_message_t *move) {
+    auto msg = new MotorMoveMessage(move);
+    auto resp = this->query<current_position_message_t>(msg, 60);
+    delete msg;
+
+    if (resp == nullptr) {
+        return nullptr;
+    }
+
+    return resp;
+}
+
+void MainWindow::stepCnc(const StepDirection dir, const double stepMm) {
     auto *cfg = this->createConfigMessage();
     this->sendUpdatedConfig(cfg);
+
+    auto *move = this->createMoveMessage(dir, stepMm);
+    auto pos = this->sendMove(move);
+    if (!pos) {
+        qDebug() << "Cannot connect to COM";
+        return;
+    }
+
+    this->onCurrentPositionReceived(pos);
+
+    delete[] pos;
 }
+
+response_message_t* MainWindow::sendInterruptMessage() {
+    auto msg = new InterruptMessage(new empty_message_t);
+    auto resp = this->query<response_message_t>(msg, 60);
+    delete msg;
+
+    if (resp == nullptr) {
+        return nullptr;
+    }
+
+    return resp;
+}
+
+void MainWindow::interruptCnc() {
+    auto res = this->sendInterruptMessage();
+
+    if (res == nullptr) {
+        qDebug() << "Cannot connect to COM";
+        return;
+    }
+
+    delete[] res;
+}
+
+response_message_t* MainWindow::sendStartExperimentMessage() {
+    auto msg = new StartExperimentMessage(new start_experiment_t);
+    auto resp = this->query<response_message_t>(msg, 0);
+    delete msg;
+
+    if (resp == nullptr) {
+        return nullptr;
+    }
+
+    return resp;
+}
+
+void MainWindow::startExperimentCnc() {
+    auto res = this->sendStartExperimentMessage();
+
+    if (res == nullptr) {
+        qDebug() << "Cannot connect to COM";
+        return;
+    }
+
+    delete[] res;
+}
+
 
 void MainWindow::on_stepUpButton_clicked()
 {
     QtConcurrent::run(this, &MainWindow::stepCnc, StepDirection::Up, this->ui->stepLineEdit->text().toDouble());
+}
+
+
+void MainWindow::on_stepDownButton_clicked()
+{
+    QtConcurrent::run(this, &MainWindow::stepCnc, StepDirection::Down, this->ui->stepLineEdit->text().toDouble());
+}
+
+
+void MainWindow::on_stepLeftButton_clicked()
+{
+    QtConcurrent::run(this, &MainWindow::stepCnc, StepDirection::Left, this->ui->stepLineEdit->text().toDouble());
+}
+
+
+void MainWindow::on_stepRightButton_clicked()
+{
+    QtConcurrent::run(this, &MainWindow::stepCnc, StepDirection::Right, this->ui->stepLineEdit->text().toDouble());
+}
+
+void MainWindow::on_interruptButton_clicked()
+{
+    QtConcurrent::run(this, &MainWindow::interruptCnc);
+}
+
+
+void MainWindow::on_startExperimentButton_clicked()
+{
+    QtConcurrent::run(this, &MainWindow::startExperimentCnc);
 }
 

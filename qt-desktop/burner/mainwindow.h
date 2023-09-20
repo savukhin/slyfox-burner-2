@@ -44,9 +44,9 @@ private:
     void connectCOM(QString port);
 
     template<typename T>
-    T* query(const IMessage *msg) {
+    T* query(const IMessage *msg, const double timeout_s=3) {
         this->lockControls();
-        auto f = this->worker_->sendMessageSyncedFuture(msg, this->generateRequestID(), 3);
+        auto f = this->worker_->sendMessageSyncedFuture(msg, this->generateRequestID(), timeout_s);
 
         auto h = f.result();
         qDebug() << "Got result in MainWindow::query";
@@ -94,11 +94,23 @@ private slots:
     void on_selectComButton_clicked();
 
     void onConfigReceived(config_message_t *cfg);
-    void onCurrentPositionReceived(current_position_message_t *cfg);
+    void onCurrentPositionReceived(current_position_message_t *pos);
+    void onInterruptResponse(response_message_t *resp);
+    void onCurrentExperimentFinished(response_message_t *resp);
 
     void on_pushButton_clicked();
 
     void on_stepUpButton_clicked();
+
+    void on_stepDownButton_clicked();
+
+    void on_stepLeftButton_clicked();
+
+    void on_stepRightButton_clicked();
+
+    void on_interruptButton_clicked();
+
+    void on_startExperimentButton_clicked();
 
 protected:
      void closeEvent(QCloseEvent *event);
@@ -114,11 +126,16 @@ private:
     current_position_message_t* getCurrentPosition();
 
     config_message_t *createConfigMessage();
+    motor_move_message_t *createMoveMessage(const StepDirection dir, const double stepMm);
 
     void sendUpdatedConfig(config_message_t *cfg);
-    void sendMove(Axis axis, double stepMm);
+    current_position_message_t *sendMove(motor_move_message_t *move);
+    response_message_t* sendInterruptMessage();
+    response_message_t* sendStartExperimentMessage();
 
     void stepCnc(StepDirection dir, double stepMm);
+    void interruptCnc();
+    void startExperimentCnc();
 
 signals:
     void changePage(int index);
