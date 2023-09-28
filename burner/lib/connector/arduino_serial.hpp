@@ -17,7 +17,7 @@ public:
             return nullptr;
         }
         
-        uint8_t *buf = new uint8_t[1] { Serial.read() };
+        uint8_t *buf = new uint8_t[1] { (uint8_t)Serial.read() };
         // Serial.println("read 1 " + String((int)buf[0]) + "' final");
 
         return buf;

@@ -219,17 +219,17 @@ public:
     IHeader* sendMessageSyncedFuture_(const IMessage *msg, long long req_id=0, const double timeout_s=1) {
         qDebug() << "Sending message concurrent connectorworker in thread" << QThread::currentThreadId();
 
-        if (this->sync_busy_)
-            return (IHeader*)nullptr;
+//        if (this->sync_busy_)
+//            return (IHeader*)nullptr;
 
-        this->sync_busy_ = true;
+//        this->sync_busy_ = true;
 
         auto res = this->connector_->sendMessageSynced(*msg, req_id, timeout_s);
         qDebug() << "connector message sended in thread" << QThread::currentThreadId();
 
         if (res == nullptr) {
             qDebug() << "Got nullptr in qfuture";
-            this->sync_busy_ = false;
+//            this->sync_busy_ = false;
             return (IHeader*)nullptr;
         }
 
@@ -242,7 +242,7 @@ public:
       qDebug() << "returning config rapix from worker's future" << cfg->rapid_speed_x_mm_s;
 
 
-        this->sync_busy_  = false;
+//        this->sync_busy_  = false;
 
         return res;
     }

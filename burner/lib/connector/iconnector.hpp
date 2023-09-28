@@ -12,6 +12,11 @@
 #include "../crsf/my_crsf_serial_interface.hpp"
 #include "iserial.hpp"
 
+struct TickResponse {
+    IHeader* hdr;
+    bool got_byte;
+};
+
 class IConnector {
 protected:
     using subscription_type = std::function<void(void*, long)>;
@@ -19,7 +24,7 @@ protected:
 public:
     virtual void start(bool check_subscriptions=true) = 0;
     virtual void stop() = 0;
-    virtual IHeader* tick() = 0;
+    virtual TickResponse tick() = 0;
 
     virtual bool subscribe(uint8_t msg_id, subscription_type callback) = 0;
 

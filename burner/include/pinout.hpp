@@ -15,6 +15,8 @@
 #define PIN_Y_DIR  NC
 #define PIN_Y_ENA  NC
 
+#define MOTOR_PULSE_MIN_TIME_MS 10
+
 #define MOTOR_X_MAX_MM        300
 #define MOTOR_X_PULSE_PER_MM  300
 

@@ -85,7 +85,6 @@ public:
     }
 
     void writeBytes(uint8_t *data, long length) override {
-        qDebug() << "write bytes in desktop serial";
         const char* casted = (const char*)data;
         qDebug() << "use serial";
         emit newData(casted, length);

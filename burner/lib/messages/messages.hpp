@@ -35,14 +35,17 @@ typedef struct config_message_s {
     uint16_t slow_speed_y_mm_s = DEFAULT_SLOW_SPEED_Y_MM_S; // Slow speed Y-axis millimeter/second
     // -- 8 bytes -- //
 
-    uint16_t accel_x_mm_s2 = DEFAULT_ACCEL_X; // Acceleration X-axis millimeter/(second^2)
-    uint16_t accel_y_mm_s2 = DEFAULT_ACCEL_Y; // Acceleration Y-axis millimeter/(second^2)
-    // -- 12 bytes -- //
+    double accel_x_mm_s2 = DEFAULT_ACCEL_X; // Acceleration X-axis millimeter/(second^2)
+    // -- 16 bytes -- //
+    double accel_y_mm_s2 = DEFAULT_ACCEL_Y; // Acceleration Y-axis millimeter/(second^2)
+    // -- 24 bytes -- //
 
-    uint16_t x_mm = DEFAULT_X_MM; // Position in X-axis
-    uint16_t y1_mm = DEFAULT_Y1_MM; // First position in Y-axis
-    uint16_t y2_mm = DEFAULT_Y2_MM; // Second position in Y-axis
-    // -- 18 bytes -- //
+    double x_mm = DEFAULT_X_MM; // Position in X-axis
+    // -- 30 bytes -- //
+    double y1_mm = DEFAULT_Y1_MM; // First position in Y-axis
+    // -- 38 bytes -- //
+    double y2_mm = DEFAULT_Y2_MM; // Second position in Y-axis
+    // -- 46 bytes -- //
 } PACKED config_message_t;
 
 typedef struct motor_move_message_s {

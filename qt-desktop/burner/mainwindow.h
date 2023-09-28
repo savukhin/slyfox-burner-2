@@ -56,13 +56,9 @@ private:
             return nullptr;
         }
 
-        qDebug() << "create payload origin";
         void *payload_origin = h->get_payload();
-        qDebug() << "create payload_copied";
         char *payload_copied = new char[sizeof(T)];
-        qDebug() << "memcpy";
         memcpy(payload_copied, payload_origin, sizeof(T));
-        qDebug() << "delete h";
         delete h;
 
 

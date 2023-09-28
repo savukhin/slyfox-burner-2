@@ -1,7 +1,9 @@
 #include <Arduino.h>
 #include <FreeRTOSConfig.h>
 #include <pinout.hpp>
+#include <utility>
 #include <vector>
+#include <tuple>
 
 #include "connector.hpp"
 #include "carriage.hpp"
@@ -44,13 +46,85 @@ void vSensorReadAndSend(void *vParams) {
     }
 }
 
+struct vMotorMoveType {
+    long long req_id;
+    motor_move_message_t* msg;
+    TaskHandle_t xMotorMoveHandle;
+};
+
+void vStartMotorMove(void *vParams) {
+    // Serial.printf("PRIMARY IN RTOS: rapid speed %d slow speed %d accel_x %f accel_y %f\n", 
+    //     config.toMessage().rapid_speed_x_mm_s, config.toMessage().slow_speed_x_mm_s,
+    //     config.toMessage().accel_x_mm_s2, config.toMessage().accel_y_mm_s2
+    // );
+
+    auto params = (vMotorMoveType*)vParams;
+
+    long long req_id = params->req_id;
+    motor_move_message_t* msg = params->msg;
+    TaskHandle_t xMotorMoveHandle = params->xMotorMoveHandle;
+
+    // Serial.printf("Got req_id %d in task and config speed is %d and slow speed %d accel_x %f accel_x %f\n", 
+    //     req_id, config.toMessage().rapid_speed_x_mm_s, config.toMessage().slow_speed_x_mm_s, 
+    //     config.toMessage().accel_x_mm_s2, config.toMessage().accel_y_mm_s2);
+
+    bool isXAxis = ((msg->misc & 0x01) == 0);
+    ICarriage *carriage = carriage_x;
+    if (!isXAxis) { 
+        carriage = carriage_y;
+    }
+
+    double speed = config.getSlowSpeed(isXAxis);
+    if (msg->misc & 0x02 == 1) {
+        speed = config.getRapidSpeed(isXAxis);
+    }
+
+    double accel = config.getAccel(isXAxis);
+
+    // Serial.printf("Move To speed %d accel: %f isXAsix %d\n", speed, accel, isXAxis);
+
+    // Serial.printf("MOVE TO IN RTOS: rapid speed %d slow speed %d accel_x %f accel_y %f\n", 
+    //     config.toMessage().rapid_speed_x_mm_s, config.toMessage().slow_speed_x_mm_s,
+    //     config.toMessage().accel_x_mm_s2, config.toMessage().accel_y_mm_s2
+    // );
+
+    MoveResponse moved = carriage->moveTo(msg->position_mm, speed, accel);
+    // auto resp_msg = new motor_move_message_t{moved.final_position_mm, msg->misc};
+    // if (moved.interrupted) {
+    //     resp_msg->misc = (resp_msg->misc | 0x04);
+    // }
+    // Serial.printf("Moved\n");
+    // Serial.flush();
+    auto resp_msg = new current_position_message_t{
+        carriage_x->getCurrentPosition(),
+        carriage_y->getCurrentPosition()
+    };
+    // Serial.printf("Created msg\n");
+    // Serial.flush();
+
+    CurrentPositionMessage response(resp_msg);
+    // Serial.printf("Sending msg\n");
+    // Serial.flush();
+    connector->sendMessage(response, req_id);
+
+    // Serial.printf("Msg sended, finishing xTask\n");
+    // Serial.flush();
+
+    vTaskDelete(xMotorMoveHandle);
+
+    // delete vParams;
+}
+
 void setup() {
-    // Serial.begin(115200);
-    // return;
     IByteHandler *byte_handler = new MyCrsfSerial<REQ_TYPE, LEN_TYPE, MSG_TYPE>();
     ISerial *serial = new ArduinoSerial(USB_BAUDRATE);
 
     connector = new Connector(byte_handler, serial);
+
+
+    // delay(5000);
+    // Serial.println("start setup");
+
 
     IMotor *motor_x = new ArduinoMotor(PIN_X_PULL, PIN_X_DIR, PIN_X_ENA);
     IMotor *motor_y = new ArduinoMotor(PIN_Y_PULL, PIN_Y_DIR, PIN_Y_ENA);
@@ -61,7 +135,6 @@ void setup() {
     ignitor = new Ignitor(PIN_IGNITOR);
 
     experiment = new Experiment(carriage_x, carriage_y, ignitor);
-
 
     // Get config
     connector->subscribe(GetConfigMessage().get_id(), [](const void*, int req_id) {
@@ -76,45 +149,54 @@ void setup() {
     // Set config
     connector->subscribe(ConfigMessage().get_id(), [](const void* received_msg, int req_id) {
         config_message_t *msg = (config_message_t*)received_msg;
+
         config.fromMessage(msg);
+        // Serial.printf("Setting rapid speed in config %d from msg %d\n", config.toMessage().rapid_speed_x_mm_s, msg->rapid_speed_x_mm_s);
         connector->sendMessage(ResponseMessage(0), req_id);
         delete msg;
+
+        // Serial.printf("Set rapid speed in config %d\n", config.toMessage().rapid_speed_x_mm_s);
     });
 
     connector->subscribe(InterruptMessage().get_id(), [](const void* received_msg, int req_id) {
-        if (experiment->is_started()) experiment->stop();
-        if (carriage_x->isBusy()) carriage_x->stop();
-        if (carriage_y->isBusy()) carriage_y->stop();
+        // Serial.printf("Got interrupt message\n");
+        // if (experiment->is_started()) experiment->stop();
+        carriage_x->stop();
+        carriage_y->stop();
 
         connector->sendMessage(InterruptResponseMessage(0), req_id);
     });
 
     connector->subscribe(MotorMoveMessage().get_id(), [](const void* received_msg, int req_id) {
-        motor_move_message_t *msg = (motor_move_message_t*)received_msg;
-        bool isXAxis = ((msg->misc & 0x01) == 0);
-        ICarriage *carriage = carriage_x;
-        if (!isXAxis) { 
-            carriage = carriage_y;
-        }
+        // Serial.printf("Got motor move req\n");
+        xTaskHandle xMotorMoveHandle = NULL;
+        BaseType_t xReturned;
 
-        uint16_t speed = config.getSlowSpeed(isXAxis);
-        if (msg->misc & 0x02 == 1) {
-            speed = config.getRapidSpeed(isXAxis);
-        }
+        auto msg = new vMotorMoveType;
+        msg->req_id = req_id;
+        msg->msg = (motor_move_message_t*)received_msg;
+        msg->xMotorMoveHandle = xMotorMoveHandle;
+        // Serial.printf("Not in rtos: rapid speed %d slow speed %d accel_x %f accel_y %f\n", 
+        //     config.toMessage().rapid_speed_x_mm_s, config.toMessage().slow_speed_x_mm_s,
+        //     config.toMessage().accel_x_mm_s2, config.toMessage().accel_y_mm_s2
+        // );
 
-        MoveResponse moved = carriage->moveTo(msg->position_mm, speed, config.getAccel(isXAxis));
-        // auto resp_msg = new motor_move_message_t{moved.final_position_mm, msg->misc};
-        // if (moved.interrupted) {
-        //     resp_msg->misc = (resp_msg->misc | 0x04);
+        // msg->position_mm, speed, config.getAccel(isXAxis)
+        xReturned = xTaskCreate(
+                    vStartMotorMove,       /* Function that implements the task. */
+                    "MOTOR_MOVE",                   /* Text name for the task. */
+                    10000,                      /* Stack size in words, not bytes. */
+                    msg,             /* Parameter passed into the task. */
+                    tskIDLE_PRIORITY,         /* Priority at which the task is created. */
+                    &xMotorMoveHandle );               /* Used to pass out the created task's handle. */
+
+        // if( xReturned == pdPASS )
+        // {
+        //     Serial.printf("Deleting xTask\n");
+        //     Serial.flush();
+        //     /* The task was created.  Use the task's handle to delete the task. */
+        //     vTaskDelete( xHandle );
         // }
-
-        auto resp_msg = new current_position_message_t{
-            carriage_x->getCurrentPosition(),
-            carriage_y->getCurrentPosition()
-        };
-
-        CurrentPositionMessage response(resp_msg);
-        connector->sendMessage(response, req_id);
     });
 
     connector->subscribe(GetCurrentPositionMessage().get_id(), [](const void* received_msg, int req_id) {

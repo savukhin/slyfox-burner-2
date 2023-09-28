@@ -7,7 +7,9 @@
 #include <condition_variable>
 #include <atomic>
 #include <set>
+#ifndef ARDUINO
 #define QT
+#endif
 #ifdef QT
 #include <QTime>
 #include <QDebug>
@@ -25,11 +27,23 @@
 
 class Connector : public IConnector {
 private:
-    // uint8_t* (*readByte) (void);
+    #ifdef ARDUINO
+    static unsigned long long get_current_time() {
+        return millis();
+    }
+    #elif defined(QT)
+    static unsigned long long get_current_time() {
+        return QTime::currentTime().msec();
+    }
+    #endif
+
     IByteHandler* byte_handler_;
+
+    std::mutex serial_write_mx_;
     ISerial *serial_;
 
-    // std::mutex started_mutex_;
+    unsigned long long max_idle_time_ms_;
+
     std::atomic_bool started_ = { false };
 
     std::mutex received_mutex_;
@@ -67,7 +81,8 @@ private:
     }
     
 public:
-    Connector(IByteHandler *byte_handler, ISerial *serial) : byte_handler_(byte_handler), serial_(serial) {}
+    Connector(IByteHandler *byte_handler, ISerial *serial, unsigned long long max_idle_time_ms=100) : 
+        byte_handler_(byte_handler), serial_(serial), max_idle_time_ms_(max_idle_time_ms) {}
 
     bool waiterExists(long long req_id) {
         bool res = false;
@@ -80,8 +95,14 @@ public:
         return res;
     }
 
+    void checkIdleAndResetHandler(unsigned long long delta_time_ms) {
+        if (delta_time_ms < this->max_idle_time_ms_) return;
+        this->byte_handler_->reset();
+    }
+
     void start(bool check_subscriptions=true) {
         started_ = true;
+        unsigned long long lastByteTime = get_current_time();
 #ifdef QT
 
       qDebug() << "connector start() called in thread" << QThread::currentThreadId();
@@ -95,7 +116,17 @@ public:
 //            QThread::usleep(1);
             QThread::yieldCurrentThread();
             #endif
-            IHeader* hdr = this->tick();
+            TickResponse ticked = this->tick();
+            auto time = get_current_time();
+
+            if (!ticked.got_byte) {
+                this->checkIdleAndResetHandler(time - lastByteTime);
+                continue;
+            }
+
+            lastByteTime = time;
+
+            IHeader* hdr = ticked.hdr;
 
             if (hdr == nullptr) continue;
 
@@ -135,7 +166,7 @@ public:
 
     bool isStarted() { return started_; }
 
-    IHeader* tick() {
+    TickResponse tick() {
         if (this->serial_ == nullptr) 
             throw new std::runtime_error("no readbyte function implemented");
         if (this->byte_handler_ == nullptr) 
@@ -143,7 +174,7 @@ public:
 
         uint8_t *byte_ref = serial_->readByte();
 
-        if (!byte_ref) return nullptr;
+        if (!byte_ref) return TickResponse{nullptr, false};
 
         uint8_t byte = *byte_ref;
         #ifdef ARDUINO
@@ -162,7 +193,7 @@ public:
         //     Serial.println("no-result");
         // #endif
 
-        return result;
+        return TickResponse{result, true};
     }
 
     bool subscribe(uint8_t msg_id, subscription_type callback) {
@@ -180,7 +211,9 @@ public:
 #ifdef QT
         qDebug() << "write bytes length" << packet->get_total_length() << " while bytelen " << msg.getByteLen();
 #endif
+        serial_write_mx_.lock();
         serial_->writeBytes(packet_bytes, packet->get_total_length());
+        serial_write_mx_.unlock();
     }
 
      IHeader* sendMessageSynced(const IMessage &msg, long long req_id=0, const double timeout_s=1) {
@@ -200,6 +233,8 @@ public:
 
          QTime dieTime= QTime::currentTime().addSecs(timeout_s);
          qDebug() << "dieTime" << dieTime << "current Timr" << QTime::currentTime() << "timeout s =" << timeout_s;
+         qDebug() << "is already have" << (this->received_.count(req_id)? " have " : " not have");
+
          while (started_ && !is_received && QTime::currentTime() < dieTime) {
              this->received_mutex_.lock();
 //             is_received = (this->received_.find(req_id) != this->received_.end());

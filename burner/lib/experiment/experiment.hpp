@@ -82,6 +82,6 @@ public:
 
     bool stop() override {
         started_ = false;
-        return (carriage_y_->stop() || carriage_x_->stop() || ignitor_->stop(););
+        return (carriage_y_->stop() || carriage_x_->stop() || ignitor_->stop());
     }
 };

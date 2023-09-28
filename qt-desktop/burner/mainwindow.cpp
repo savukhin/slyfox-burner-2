@@ -8,6 +8,7 @@
 #include <QSerialPort>
 #include <QTime>
 #include <QFuture>
+#include <QtCharts>
 #include <QSerialPortInfo>
 
 
@@ -66,6 +67,8 @@ MainWindow::MainWindow(QWidget *parent)
     connector_qthread_->start();
 //    connector_qthread_->setPriority(QThread::HighPriority);
 
+    //this->ui->chartsView
+
     this->dropConnection();
 }
 
@@ -105,6 +108,7 @@ void MainWindow::onCurrentPositionReceived(current_position_message_t* position)
 }
 
 void MainWindow::onInterruptResponse(response_message_t *) {
+    qDebug() << "interrupt subsrciption received";
     this->unlockControls();
 }
 
@@ -132,9 +136,9 @@ void MainWindow::on_pushButton_5_clicked()
 
 void MainWindow::on_pushButton_8_clicked()
 {
-    auto msg = GetConfigMessage();
-    this->worker_->sendMessage(msg, this->generateRequestID());
-//    ui->stackedOptions->setCurrentIndex((ui->stackedOptions->currentIndex() + 1) % 2);
+//    auto msg = GetConfigMessage();
+//    this->worker_->sendMessage(msg, this->generateRequestID());
+    ui->stackedOptions->setCurrentIndex((ui->stackedOptions->currentIndex() + 1) % 2);
 }
 
 void MainWindow::updateComsDropdown() {
@@ -363,8 +367,8 @@ config_message_t *MainWindow::createConfigMessage() {
     cfg->rapid_speed_y_mm_s = this->ui->rapidYSpeedInput->text().toUInt();
     cfg->slow_speed_y_mm_s = this->ui->lowYSpeedInput->text().toUInt();
 
-    cfg->accel_x_mm_s2 = this->ui->accelXInput->text().toUInt();
-    cfg->accel_y_mm_s2 = this->ui->accelYInput->text().toUInt();
+    cfg->accel_x_mm_s2 = this->ui->accelXInput->text().toDouble();
+    cfg->accel_y_mm_s2 = this->ui->accelYInput->text().toDouble();
 
     cfg->x_mm = this->ui->startXInput->text().toUInt();
     cfg->y1_mm = this->ui->startYInput->text().toUInt();
@@ -403,8 +407,11 @@ motor_move_message_t *MainWindow::createMoveMessage(const StepDirection dir, con
 
 void MainWindow::sendUpdatedConfig(config_message_t *cfg) {
     auto msg = new ConfigMessage(cfg);
+    qDebug() << "Value of accel in config" << cfg->accel_x_mm_s2;
     auto resp = this->query<response_message_t>(msg);
     delete msg;
+
+
 
     if (resp == nullptr) {
         qDebug() << "Cannot connect to COM";
@@ -416,7 +423,9 @@ void MainWindow::sendUpdatedConfig(config_message_t *cfg) {
 
 current_position_message_t *MainWindow::sendMove(motor_move_message_t *move) {
     auto msg = new MotorMoveMessage(move);
+    qDebug() << "Sending motor move msg" << move->misc << "and position" << move->position_mm;
     auto resp = this->query<current_position_message_t>(msg, 60);
+    qDebug() << "Received motor move response";
     delete msg;
 
     if (resp == nullptr) {
@@ -429,6 +438,8 @@ current_position_message_t *MainWindow::sendMove(motor_move_message_t *move) {
 void MainWindow::stepCnc(const StepDirection dir, const double stepMm) {
     auto *cfg = this->createConfigMessage();
     this->sendUpdatedConfig(cfg);
+
+//    return;
 
     auto *move = this->createMoveMessage(dir, stepMm);
     auto pos = this->sendMove(move);
@@ -444,12 +455,11 @@ void MainWindow::stepCnc(const StepDirection dir, const double stepMm) {
 
 response_message_t* MainWindow::sendInterruptMessage() {
     auto msg = new InterruptMessage(new empty_message_t);
+    qDebug() << "Received interrupt message";
     auto resp = this->query<response_message_t>(msg, 60);
+    qDebug() << "Received interrupt response";
+//    this->worker_->sendMessage(*msg, this->generateRequestID());
     delete msg;
-
-    if (resp == nullptr) {
-        return nullptr;
-    }
 
     return resp;
 }

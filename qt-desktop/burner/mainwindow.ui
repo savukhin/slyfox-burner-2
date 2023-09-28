@@ -727,9 +727,15 @@ padding: 3px;</string>
                <item>
                 <widget class="QPushButton" name="interruptButton">
                  <property name="styleSheet">
-                  <string notr="true">background-color: rgb(255, 85, 0);
+                  <string notr="true">QPushButton {
+background-color: rgb(255, 85, 0);
 background-color: rgb(170, 0, 0);
-background-color: rgb(250, 50, 50);</string>
+background-color: rgb(250, 50, 50);
+}
+
+QPushButton:hover {
+background-color: black;
+}</string>
                  </property>
                  <property name="text">
                   <string>Interrupt</string>
@@ -811,6 +817,9 @@ background-color: rgb(250, 50, 50);</string>
          <item>
           <widget class="QTextBrowser" name="textBrowser"/>
          </item>
+         <item>
+          <widget class="QChartView" name="chartsView"/>
+         </item>
         </layout>
        </item>
       </layout>
@@ -829,6 +838,13 @@ background-color: rgb(250, 50, 50);</string>
    </property>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QChartView</class>
+   <extends>QGraphicsView</extends>
+   <header>QtCharts</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

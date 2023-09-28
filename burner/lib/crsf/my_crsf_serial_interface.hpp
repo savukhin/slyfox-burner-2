@@ -21,6 +21,8 @@ public:
 class IByteHandler
 {
 public:
+    virtual void reset() = 0;
+
     virtual IHeader* handleByte(uint8_t b) = 0;
     // virtual IHeader* makePacket(uint8_t b) = 0;
     virtual IHeader *makePacket(const IMessage &msg, long long req_id) = 0;
