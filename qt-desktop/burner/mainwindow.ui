@@ -261,8 +261,8 @@ padding: 3px;</string>
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>348</width>
-                <height>608</height>
+                <width>331</width>
+                <height>685</height>
                </rect>
               </property>
               <property name="styleSheet">
@@ -571,6 +571,27 @@ padding: 3px;</string>
                 </widget>
                </item>
                <item>
+                <widget class="QPushButton" name="setStartXButton">
+                 <property name="text">
+                  <string>Set Start X</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="setStartYButton">
+                 <property name="text">
+                  <string>Set Start Y</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="setEndYButton">
+                 <property name="text">
+                  <string>Set End Y</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <widget class="Line" name="line">
                  <property name="styleSheet">
                   <string notr="true"/>
@@ -595,6 +616,34 @@ padding: 3px;</string>
                   <property name="rightMargin">
                    <number>1</number>
                   </property>
+                  <item row="0" column="1">
+                   <widget class="QLabel" name="rapid_speed_label">
+                    <property name="text">
+                     <string>Rapid X Speed</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QLabel" name="label_2">
+                    <property name="text">
+                     <string>Low X Speed</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="1">
+                   <widget class="QLabel" name="label_4">
+                    <property name="text">
+                     <string>Accel X</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="3">
+                   <widget class="QLabel" name="label_9">
+                    <property name="text">
+                     <string>mm/s^2</string>
+                    </property>
+                   </widget>
+                  </item>
                   <item row="0" column="2">
                    <widget class="QLineEdit" name="rapidXSpeedInput">
                     <property name="text">
@@ -606,62 +655,6 @@ padding: 3px;</string>
                    <widget class="QLineEdit" name="accelYInput">
                     <property name="text">
                      <string>10</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="5" column="1">
-                   <widget class="QLabel" name="label_5">
-                    <property name="text">
-                     <string>Accel Y</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="3">
-                   <widget class="QLabel" name="label_6">
-                    <property name="text">
-                     <string>mm/s</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="1">
-                   <widget class="QLabel" name="label">
-                    <property name="text">
-                     <string>Rapid Y Speed</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="4" column="1">
-                   <widget class="QLabel" name="label_4">
-                    <property name="text">
-                     <string>Accel X</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="3" column="2">
-                   <widget class="QLineEdit" name="lowYSpeedInput">
-                    <property name="text">
-                     <string>10</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="4" column="3">
-                   <widget class="QLabel" name="label_9">
-                    <property name="text">
-                     <string>mm/s^2</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="1" column="2">
-                   <widget class="QLineEdit" name="rapidYSpeedInput">
-                    <property name="text">
-                     <string>10</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item row="2" column="1">
-                   <widget class="QLabel" name="label_2">
-                    <property name="text">
-                     <string>Low X Speed</string>
                     </property>
                    </widget>
                   </item>
@@ -679,17 +672,24 @@ padding: 3px;</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="0" column="1">
-                   <widget class="QLabel" name="rapid_speed_label">
+                  <item row="3" column="3">
+                   <widget class="QLabel" name="label_8">
                     <property name="text">
-                     <string>Rapid X Speed</string>
+                     <string>mm/s</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="0" column="3">
-                   <widget class="QLabel" name="rapid_speed_mms_label">
+                  <item row="3" column="2">
+                   <widget class="QLineEdit" name="lowYSpeedInput">
                     <property name="text">
-                     <string>mm/s</string>
+                     <string>10</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="5" column="1">
+                   <widget class="QLabel" name="label_5">
+                    <property name="text">
+                     <string>Accel Y</string>
                     </property>
                    </widget>
                   </item>
@@ -700,10 +700,17 @@ padding: 3px;</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="4" column="2">
-                   <widget class="QLineEdit" name="accelXInput">
+                  <item row="1" column="1">
+                   <widget class="QLabel" name="label">
                     <property name="text">
-                     <string>10</string>
+                     <string>Rapid Y Speed</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="3">
+                   <widget class="QLabel" name="rapid_speed_mms_label">
+                    <property name="text">
+                     <string>mm/s</string>
                     </property>
                    </widget>
                   </item>
@@ -714,10 +721,24 @@ padding: 3px;</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="3" column="3">
-                   <widget class="QLabel" name="label_8">
+                  <item row="1" column="3">
+                   <widget class="QLabel" name="label_6">
                     <property name="text">
                      <string>mm/s</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="2">
+                   <widget class="QLineEdit" name="rapidYSpeedInput">
+                    <property name="text">
+                     <string>10</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="2">
+                   <widget class="QLineEdit" name="accelXInput">
+                    <property name="text">
+                     <string>10</string>
                     </property>
                    </widget>
                   </item>

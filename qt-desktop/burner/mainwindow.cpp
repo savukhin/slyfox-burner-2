@@ -533,3 +533,24 @@ void MainWindow::on_startExperimentButton_clicked()
     QtConcurrent::run(this, &MainWindow::startExperimentCnc);
 }
 
+
+void MainWindow::on_setStartXButton_clicked()
+{
+    QString text = this->ui->currentXInput->text();
+    this->ui->startXInput->setText(text);
+}
+
+
+void MainWindow::on_setStartYButton_clicked()
+{
+    QString text = this->ui->currentYInput->text();
+    this->ui->startYInput->setText(text);
+}
+
+
+void MainWindow::on_setEndYButton_clicked()
+{
+    QString text = this->ui->currentYInput->text();
+    this->ui->endYInput->setText(text);
+}
+

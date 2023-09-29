@@ -186,8 +186,6 @@ public:
         auto last_frame_speed_mm_s = 0;
         unsigned long prev_time_desired_ms = 0;
 
-        float final_position_mm = this->current_position_mm_;
-
         bool interrupted = false;
 
         // Serial.printf("start_time=%d speed_mm_s=%f deltaS_mm=%f  koef=%f  max_delta_time=%f  max_delay_ms_half=%f max_delay_us_half=%f  max_delay_ms_half_ticks=%f portTICK_PERIOD_MS=%d\n",
@@ -255,6 +253,10 @@ public:
         // Serial.println("Finished pulling");
 
         this->busy_ = false;
+
+        if (!interrupted) {
+            this->current_position_mm_ = position_mm;
+        }
 
         // Serial.println("Returning");
         return MoveResponse{this->current_position_mm_, interrupted};

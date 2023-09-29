@@ -108,6 +108,12 @@ private slots:
 
     void on_startExperimentButton_clicked();
 
+    void on_setStartXButton_clicked();
+
+    void on_setStartYButton_clicked();
+
+    void on_setEndYButton_clicked();
+
 protected:
      void closeEvent(QCloseEvent *event);
 
