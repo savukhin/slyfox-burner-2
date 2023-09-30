@@ -26,3 +26,13 @@ public:
         return result;
     }
 };
+
+class RandomDummySensor : public ISensor {
+public:
+    RandomDummySensor() = default;
+
+    uint16_t read() {
+        uint16_t result = rand() % 100;
+        return result;
+    }
+};

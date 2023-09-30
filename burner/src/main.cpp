@@ -17,35 +17,9 @@
 #include "ignitor.hpp"
 
 #include "connector_start.hpp"
-#include "motor_move.hpp"
+#include "sensors_task.hpp"
 
 #define RD_TLS __thread
-
-// IConnector *connector;
-// ICarriage *carriage_x;
-// ICarriage *carriage_y;
-// Config config;
-// IIgnitor *ignitor;
-// IExperiment *experiment;
-// std::vector<ISensor*> sensors = { new PhotoResistor(PIN_PHOTO_RESISTOR) };
-// ISensor *(sensors[]) = { new PhotoResistor(PIN_PHOTO_RESISTOR) };
-
-
-
-// void vSensorReadAndSend(void *vParams) {
-//     for (;;) {
-//         sensors_t *msg = new sensors_t{};
-//         msg->values = new uint16_t[sensors.size()];
-
-//         for (int i = 0; i < sensors.size(); i++) {
-//             auto val = sensors[i]->read();
-//             msg->values[i] = val;
-//         }
-
-//         SensorsMessage<1> message(msg);
-//         connector->sendMessage(message, 0);
-//     }
-// }
 
 void setup() {
     Config *config = new Config;
@@ -58,10 +32,6 @@ void setup() {
 
     IConnector *connector = new Connector(byte_handler, serial);
 
-    // delay(5000);
-    // Serial.println("start setup");
-
-
     IMotor *motor_x = new ArduinoMotor(PIN_X_PULL, PIN_X_DIR, PIN_X_ENA);
     IMotor *motor_y = new ArduinoMotor(PIN_Y_PULL, PIN_Y_DIR, PIN_Y_ENA);
 
@@ -72,17 +42,25 @@ void setup() {
 
     IExperiment *experiment = new Experiment(carriage_x, carriage_y, ignitor);
 
-    // BaseType_t xReturned;
-    // TaskHandle_t xHandle = NULL;
-    // xReturned = xTaskCreate(
-    //                 vSensorReadAndSend,       /* Function that implements the task. */
-    //                 "NAME",                   /* Text name for the task. */
-    //                 512,                      /* Stack size in words, not bytes. */
-    //                 ( void * ) 1,             /* Parameter passed into the task. */
-    //                 tskIDLE_PRIORITY,         /* Priority at which the task is created. */
-    //                 &xHandle );               /* Used to pass out the created task's handle. */
+    sensors_vector *sensors = new sensors_vector{ new RandomDummySensor() };
+    // ISensor *sensors[] = { new RandomDummySensor() };
+    // ISensor *sensors[] = { new PhotoResistor(PIN_PHOTO_RESISTOR) };
 
-    auto params = new vConnectorStruct{
+    auto sensorTaskParams = new vSensorTaskParams {
+        connector,
+        sensors
+    };
+
+    TaskHandle_t xSensorsHandle = NULL;
+    xTaskCreate(
+                    vSensorReadAndSend,       /* Function that implements the task. */
+                    "NAME2",                   /* Text name for the task. */
+                    51200,                      /* Stack size in words, not bytes. */
+                    sensorTaskParams,             /* Parameter passed into the task. */
+                    tskIDLE_PRIORITY,         /* Priority at which the task is created. */
+                    &xSensorsHandle );               /* Used to pass out the created task's handle. */
+
+    auto connectorParams = new vConnectorStruct{
         connector,
         config,
         carriage_x,
@@ -90,19 +68,15 @@ void setup() {
         experiment
     };
 
-    // vConnectorStart(params);
-
-    // return;
-
-    TaskHandle_t xHandle = NULL;
+    TaskHandle_t xConnectorHandle = NULL;
     xTaskCreate(
                     vConnectorStart,       /* Function that implements the task. */
                     "NAME",                   /* Text name for the task. */
                     1 * 51200,                      /* Stack size in words, not bytes. */
                     // 5120,                      /* Stack size in words, not bytes. */
-                    (void*)params,             /* Parameter passed into the task. */
+                    (void*)connectorParams,             /* Parameter passed into the task. */
                     tskIDLE_PRIORITY,         /* Priority at which the task is created. */
-                    &xHandle);               /* Used to pass out the created task's handle. */
+                    &xConnectorHandle);               /* Used to pass out the created task's handle. */
 }
 
 void loop() {
