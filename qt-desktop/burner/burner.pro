@@ -28,6 +28,7 @@ HEADERS += \
     connector.hpp \
     connector_worker.hpp \
     mainwindow.h \
+    myChart.hpp \
     settings.hpp
 
 FORMS += \

@@ -42,13 +42,15 @@ void setup() {
 
     IExperiment *experiment = new Experiment(carriage_x, carriage_y, ignitor);
 
-    sensors_vector *sensors = new sensors_vector{ new RandomDummySensor() };
+    auto pyrometer = new RandomDummySensor();
+
+    // sensors_vector *sensors = new sensors_vector{ pyrometer };
     // ISensor *sensors[] = { new RandomDummySensor() };
     // ISensor *sensors[] = { new PhotoResistor(PIN_PHOTO_RESISTOR) };
 
     auto sensorTaskParams = new vSensorTaskParams {
         connector,
-        sensors
+        pyrometer
     };
 
     TaskHandle_t xSensorsHandle = NULL;

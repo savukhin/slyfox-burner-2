@@ -167,6 +167,11 @@ public:
             emit this->receivedSensors(sensors);
         });
 
+        this->connector_->subscribe(SensorsNamedMessage().get_id(), [&](const void* received_msg, int) {
+            sensors_named_t *sensors = (sensors_named_t*)received_msg;
+            emit this->receivedNamedSensors(sensors);
+        });
+
         qDebug() << "constructor connectorworker in thread" << QThread::currentThreadId();
         sync_message_worker_->moveToThread(sync_message_thread_);
         async_read_worker_->moveToThread(async_read_thread_);
@@ -300,6 +305,7 @@ signals:
     void receivedInterruptResponse(response_message_t *resp);
     void receivedExperimentFinished(response_message_t *resp);
     void receivedSensors(sensors_t *sensors);
+    void receivedNamedSensors(sensors_named_t *sensors);
 };
 
 #endif // CONNECTOR_WORKER_HPP

@@ -57,6 +57,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this->worker_, &ConnectorWorker::receivedCurrentPosition, this, &MainWindow::onCurrentPositionReceived);
     connect(this->worker_, &ConnectorWorker::receivedInterruptResponse, this, &MainWindow::onInterruptResponse);
     connect(this->worker_, &ConnectorWorker::receivedExperimentFinished, this, &MainWindow::onCurrentExperimentFinished);
+    connect(this->worker_, &ConnectorWorker::receivedSensors, this, &MainWindow::onSensorsReceived);
+    connect(this->worker_, &ConnectorWorker::receivedNamedSensors, this, &MainWindow::onNamedSensorsReceived);
 
     connect(this, &MainWindow::changePage, this->ui->stackedOptions, &QStackedWidget::setCurrentIndex);
 
@@ -70,6 +72,9 @@ MainWindow::MainWindow(QWidget *parent)
     //this->ui->chartsView
 
     this->dropConnection();
+
+//    this->ui->chartsView;
+    this->pyroChart = new MyChart(this->ui->chartsView, "Pyrometer", "Temperature, C");
 }
 
 
@@ -115,6 +120,24 @@ void MainWindow::onInterruptResponse(response_message_t *) {
 void MainWindow::onCurrentExperimentFinished(response_message_t *) {
     this->unlockControls();
 }
+
+void MainWindow::onSensorsReceived(sensors_t *sensors) {
+    qDebug() << "Received sensors signal: deprecated, missing";
+    //    qDebug() << "Received sensors signal" << sensors->values[0];
+//    auto pyro = sensors->values[0];
+//    this->pyroSeries->append(QTime::currentTime().msec(), pyro);
+}
+
+void MainWindow::onNamedSensorsReceived(sensors_named_t *sensors) {
+//    static int a = 0;
+    auto pyro = sensors->pyrometer;
+    qDebug() << "Received named sensors signal" << pyro;
+//    this->pyroSeries->append(QTime::currentTime().msec(), pyro);
+//    this->pyroSeries->append(a, pyro);
+//    a++;
+    this->pyroChart->append(pyro);
+}
+
 
 MainWindow::~MainWindow()
 {

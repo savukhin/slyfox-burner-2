@@ -136,6 +136,10 @@ public:
             qDebug() << "Got req " << req_id;
             qDebug() << "Got req type " << hdr->get_msg_type_id();
             qDebug() << "Got req in thread" << QThread::currentThreadId();
+
+            if (hdr->get_msg_type_id()) {
+                qDebug() << "Req payload is nullptr =" << (hdr->get_payload() == nullptr);
+            }
 #endif
 
             bool isExist = this->waiterExists(req_id);

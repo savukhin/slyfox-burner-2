@@ -68,6 +68,10 @@ typedef struct get_experiment_state_s {
     uint8_t is_started;
 } PACKED get_experiment_state_t;
 
+typedef struct sensors_named_s {
+    uint16_t pyrometer;
+} PACKED sensors_named_t;
+
 typedef struct sensors_s {
     uint16_t *values;
 } PACKED sensors_t;
@@ -122,7 +126,8 @@ using GetCurrentPositionMessage = Message<empty_message_t, 8>;
 using CurrentPositionMessage = Message<current_position_message_t, 9>;
 template<uint8_t Len>
 using SensorsMessage = SensorsMessage_<10, Len>;
-using StartExperimentMessage = Message<start_experiment_t, 11>;
-using GetExperimentStateMessage = Message<get_experiment_state_t, 12>;
-using StopExperimentMessage = Message<empty_message_t, 13>;
-using ExperimentFinishedMessage = ResponseMessage_<14>;
+using SensorsNamedMessage = Message<sensors_named_t, 11>;
+using StartExperimentMessage = Message<start_experiment_t, 12>;
+using GetExperimentStateMessage = Message<get_experiment_state_t, 13>;
+using StopExperimentMessage = Message<empty_message_t, 14>;
+using ExperimentFinishedMessage = ResponseMessage_<15>;

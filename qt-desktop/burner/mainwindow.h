@@ -12,6 +12,10 @@ QT_END_NAMESPACE
 #include <thread>
 #include <atomic>
 #include <QThread>
+#include "myChart.hpp"
+
+using namespace QtCharts;
+
 #include "connector_worker.hpp"
 #include "settings.hpp"
 
@@ -37,6 +41,8 @@ private:
 
     std::atomic<long long> req_id = { 1 };
     long long max_req_id = MAX_REQUEST_ID;
+
+    MyChart* pyroChart;
 
     void setConnectionError(QString error);
     void clearConnectionError();
@@ -93,6 +99,8 @@ private slots:
     void onCurrentPositionReceived(current_position_message_t *pos);
     void onInterruptResponse(response_message_t *resp);
     void onCurrentExperimentFinished(response_message_t *resp);
+    void onSensorsReceived(sensors_t *sensors);
+    void onNamedSensorsReceived(sensors_named_t *sensors);
 
     void on_pushButton_clicked();
 
