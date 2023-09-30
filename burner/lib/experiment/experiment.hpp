@@ -40,10 +40,10 @@ public:
     Experiment(ICarriage *carriage_x, ICarriage *carriage_y, IIgnitor *ignitor): 
         carriage_x_(carriage_x), carriage_y_(carriage_y), ignitor_(ignitor) {}
 
-    bool start(const Config &config) override {
+    bool start(const Config *config) override {
         started_ = true;
 
-        config_message_t cfg = config.toMessage();
+        config_message_t cfg = config->toMessage();
         
         MoveResponse res;
         res = carriage_x_->moveTo(0, cfg.rapid_speed_x_mm_s, cfg.accel_x_mm_s2);

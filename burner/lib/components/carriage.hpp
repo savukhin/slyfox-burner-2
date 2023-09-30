@@ -26,7 +26,7 @@ private:
     std::atomic_bool need_stop_ = { false };
 
     unsigned long calculate_count_of_pulls(float distance_mm) {
-        return distance_mm * pulse_per_mm_;
+        return abs(distance_mm * pulse_per_mm_);
     }
 
     static TickType_t toTick(const double delay_ms) {
@@ -190,23 +190,34 @@ public:
 
         // Serial.printf("start_time=%d speed_mm_s=%f deltaS_mm=%f  koef=%f  max_delta_time=%f  max_delay_ms_half=%f max_delay_us_half=%f  max_delay_ms_half_ticks=%f portTICK_PERIOD_MS=%d\n",
         //         start_time, speed_mm_s, deltaS_mm, koef, max_delta_time, max_delay_ms_half, max_delay_us_half, max_delay_ms_half_ticks, portTICK_PERIOD_MS);
-                
+        // Serial.flush();
+        // printf("start_time=%d speed_mm_s=%f deltaS_mm=%f  koef=%f  max_delta_time=%f  max_delay_ms_half=%f max_delay_us_half=%f  max_delay_ms_half_ticks=%f portTICK_PERIOD_MS=%d\n",
+        //     start_time, speed_mm_s, deltaS_mm, koef, max_delta_time, max_delay_ms_half, max_delay_us_half, max_delay_ms_half_ticks, portTICK_PERIOD_MS);
 
+
+        // printf("pulls count %d\n", pulls);
         // Serial.printf("pulls count %d\n", pulls);
+        // Serial.flush();
+
+        unsigned long current_time_ms;
+        unsigned long desired_time_s;
+        unsigned long desired_time_ms, tick_start_time;
 
         for (unsigned long i = 0; i < pulls; i++) {
             // Serial.printf("i =%d\n", i);
+            // printf("i =%d\n", i);
+            // Serial.flush();
             if (this->need_stop_) {
                 // Serial.printf("need stop in carriage\n");
                 this->need_stop_ = false;
                 interrupted = true;
                 break;
             }
-            if (this->paused_) {
-                i--;
-                continue;
-            }
-            auto tick_start_time = millis();
+            // if (this->paused_) {
+            //     i--;
+            //     continue;
+            // }
+            tick_start_time = millis();
 
 
 
@@ -217,8 +228,10 @@ public:
                 // Serial.println("first delay plato");
                 // vTaskDelay(max_delay_ms_half_ticks);
                 delayMicroseconds(max_delay_us_half);
+                // delay_us(max_delay_us_half);
                 this->motor_->release();
                 delayMicroseconds(max_delay_us_half);
+                // delay_us(max_delay_us_half);
                 // Serial.println("ssecond delay plato");
                 // vTaskDelay(max_delay_ms_half_ticks);
                 // final_position_mm = current_position_mm_ + deltaT * speed_mm_s;
@@ -229,19 +242,21 @@ public:
             }
 
 
-            unsigned long current_time_ms = move_time_ms;
-            unsigned long desired_time_s = sqrt((2 * displacement_mm) / accell_mm_s2);
-            unsigned long desired_time_ms = desired_time_s * 1000;
+            current_time_ms = move_time_ms;
+            desired_time_s = sqrt((2 * displacement_mm) / accell_mm_s2);
+            desired_time_ms = desired_time_s * 1000;
 
             if (current_time_ms > desired_time_ms) {
                 auto delta = desired_time_ms - current_time_ms;
-                auto ticks = this->toTick(delta);
-                vTaskDelay(ticks);
+                // auto ticks = this->toTick(delta);
+                // vTaskDelay(ticks);
+                delayMicroseconds(delta * 1000);
             } else {
                 this->current_position_mm_ = this->current_position_mm_ + this->mm_per_pulse_;
 
                 this->motor_->pull(is_forward);
                 vTaskDelay(this->motor_pull_ticks);
+                // delayMicroseconds(delta * 1000);
                 this->motor_->release();
                 vTaskDelay(this->motor_pull_ticks);
             }
@@ -255,7 +270,7 @@ public:
         this->busy_ = false;
 
         if (!interrupted) {
-            this->current_position_mm_ = position_mm;
+            this->current_position_mm_ = desired_position_mm;
         }
 
         // Serial.println("Returning");

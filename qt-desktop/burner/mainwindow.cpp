@@ -379,6 +379,7 @@ config_message_t *MainWindow::createConfigMessage() {
 
 motor_move_message_t *MainWindow::createMoveMessage(const StepDirection dir, const double stepMm) {
     auto msg = new motor_move_message_t;
+    short sign = 1;
 
     double current_position_mm;
     switch (dir) {
@@ -388,10 +389,12 @@ motor_move_message_t *MainWindow::createMoveMessage(const StepDirection dir, con
         break;
     case StepDirection::Down:
         current_position_mm = this->ui->currentXInput->text().toDouble();
+        sign = -1;
         msg->misc = 0x00;
         break;
     case StepDirection::Left:
         current_position_mm = this->ui->currentYInput->text().toDouble();
+        sign = -1;
         msg->misc = 0x01;
         break;
     case StepDirection::Right:
@@ -400,7 +403,7 @@ motor_move_message_t *MainWindow::createMoveMessage(const StepDirection dir, con
         break;
     }
 
-    msg->position_mm = current_position_mm + stepMm;
+    msg->position_mm = current_position_mm + sign * stepMm;
 
     return msg;
 }

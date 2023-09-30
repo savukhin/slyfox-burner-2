@@ -211,7 +211,13 @@ public:
 #ifdef QT
         qDebug() << "write bytes length" << packet->get_total_length() << " while bytelen " << msg.getByteLen();
 #endif
+// #ifdef ARDUINO
+//         printf("locked in send message");
+// #endif
         serial_write_mx_.lock();
+// #ifdef ARDUINO
+//         printf("writeBytes");
+// #endif
         serial_->writeBytes(packet_bytes, packet->get_total_length());
         serial_write_mx_.unlock();
     }
